@@ -1,0 +1,24 @@
+[project]
+name = "digital-shadow"
+version = "0.1.0"
+description = "Your personal AI digital twin"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "httpx>=0.25.0",
+    "pydantic>=2.5.0",
+    "watchfiles>=0.21.0",
+    "python-multipart>=0.0.6",
+]
+
+[project.scripts]
+shadowd = "shadowd.shadowd:run"
+shadow-mcp = "shadowd.run_mcp_server:main"
+summon = "summon.summon_cli:main"
+shadowctl = "summon.summon_cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["shadowd*", "shikigami*", "phone*", "sensors*", "summon*"]
+exclude = ["tests*", "venv*", "data*", "cache*", ".hypothesis*", "__pycache__*"]

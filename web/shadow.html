@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Shadow AI</title>
+<style>
+  :root {
+    --bg:#0a0a10; --surface:#15151f; --surface2:#1f1f2c;
+    --border:#2a2a3a; --text:#eaeaf4; --muted:#8888a8; --dim:#555570;
+    --accent:#7c5cff; --green:#00dc82; --red:#ff4d6a; --orange:#ffb84d; --blue:#4dc9f6;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;
+       background:var(--bg);color:var(--text);line-height:1.5;min-height:100vh;padding:24px}
+  h1{font-size:24px;font-weight:800;letter-spacing:-.5px;
+     background:linear-gradient(135deg,var(--accent),var(--green));
+     -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  h2{font-size:14px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:24px 0 12px}
+  .layout{max-width:1100px;margin:0 auto}
+  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+  .pill{display:inline-flex;align-items:center;gap:6px;background:var(--surface);
+        border:1px solid var(--border);padding:6px 12px;border-radius:8px;font-size:12px;color:var(--muted)}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--dim)}
+  .dot.green{background:var(--green);box-shadow:0 0 8px var(--green)}
+  .dot.red{background:var(--red);box-shadow:0 0 8px var(--red)}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media (max-width: 760px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px}
+  .card.tall{min-height:280px}
+  .row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)}
+  .row:last-child{border-bottom:0}
+  .row .label{color:var(--muted);font-size:13px}
+  .row .value{font-family:ui-monospace,monospace;font-size:13px}
+  .badge{font-size:11px;padding:2px 8px;border-radius:6px;background:var(--surface2);color:var(--text)}
+  .badge.green{background:rgba(0,220,130,.15);color:var(--green)}
+  .badge.red{background:rgba(255,77,106,.15);color:var(--red)}
+  .badge.orange{background:rgba(255,184,77,.15);color:var(--orange)}
+  .badge.blue{background:rgba(77,201,246,.15);color:var(--blue)}
+  .insight{padding:10px 12px;border-left:3px solid var(--border);margin-bottom:8px;background:var(--surface2);border-radius:0 8px 8px 0}
+  .insight.high{border-left-color:var(--red)}
+  .insight.medium{border-left-color:var(--orange)}
+  .insight.low{border-left-color:var(--blue)}
+  .insight .kind{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
+  .insight .text{margin-top:4px;font-size:13px}
+  .insight .meta{margin-top:4px;font-size:11px;color:var(--dim);font-family:ui-monospace,monospace}
+  form{display:flex;gap:8px;margin-top:12px}
+  select,input[type=text]{background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+    color:var(--text);padding:10px 12px;font-size:14px;font-family:inherit;width:100%}
+  button{background:var(--accent);color:white;border:none;border-radius:8px;padding:10px 16px;
+    font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+  button:hover{filter:brightness(1.1)}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  pre{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;
+    font-size:12px;font-family:ui-monospace,monospace;white-space:pre-wrap;word-wrap:break-word;
+    max-height:400px;overflow-y:auto;color:var(--text)}
+  .ability-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:13px}
+  .ability-row .name{color:var(--text)}
+  .ability-row .desc{color:var(--muted);font-size:11px}
+  footer{margin-top:32px;text-align:center;color:var(--dim);font-size:11px;font-family:ui-monospace,monospace}
+</style>
+</head>
+<body>
+<div class="layout">
+  <header>
+    <h1>🐺 Shadow AI</h1>
+    <div class="pill"><span id="conn-dot" class="dot"></span><span id="conn-text">connecting…</span></div>
+  </header>
+
+  <h2>Daemon</h2>
+  <div class="card" id="status-card">
+    <div class="row"><span class="label">Observations</span><span class="value" id="status-obs">—</span></div>
+    <div class="row"><span class="label">Tracked people</span><span class="value" id="status-people">—</span></div>
+    <div class="row"><span class="label">Decisions learned</span><span class="value" id="status-decisions">—</span></div>
+    <div class="row"><span class="label">Pending insights</span><span class="value" id="status-insights">—</span></div>
+  </div>
+
+  <h2>Summon an ability</h2>
+  <div class="card">
+    <form id="summon-form">
+      <select id="ability-select" style="max-width:200px"></select>
+      <input type="text" id="ability-query" placeholder="Question or request…" required>
+      <button type="submit" id="summon-btn">Summon</button>
+    </form>
+    <pre id="summon-output" style="margin-top:12px;display:none"></pre>
+  </div>
+
+  <div class="grid">
+    <div>
+      <h2>Recent insights</h2>
+      <div class="card tall" id="insights-card">
+        <div style="color:var(--muted);font-size:13px">Loading…</div>
+      </div>
+    </div>
+    <div>
+      <h2>Observers</h2>
+      <div class="card" id="observers-card">
+        <div style="color:var(--muted);font-size:13px">Loading…</div>
+      </div>
+      <h2 style="margin-top:24px">Abilities</h2>
+      <div class="card" id="abilities-card">
+        <div style="color:var(--muted);font-size:13px">Loading…</div>
+      </div>
+    </div>
+  </div>
+
+  <footer id="footer">shadow.html • daemon endpoint: <span id="api-base">/</span></footer>
+</div>
+
+<script>
+const API = (() => {
+  if (location.protocol === 'file:') return 'http://127.0.0.1:8765';
+  return '';
+})();
+document.getElementById('api-base').textContent = API || location.origin;
+
+const token = localStorage.getItem('shadow_token') || '';
+function headers(){ return token ? {'Authorization': 'Bearer ' + token} : {}; }
+
+async function api(path, opts = {}){
+  const res = await fetch(API + path, {
+    ...opts,
+    headers: {...(opts.headers || {}), ...headers()},
+  });
+  if (!res.ok) throw new Error('HTTP ' + res.status + ': ' + (await res.text()).slice(0,200));
+  return res.json();
+}
+
+function setConnDot(state){
+  const dot = document.getElementById('conn-dot');
+  const txt = document.getElementById('conn-text');
+  dot.className = 'dot ' + (state === 'on' ? 'green' : state === 'off' ? 'red' : '');
+  txt.textContent = state === 'on' ? 'online' : state === 'off' ? 'offline' : 'connecting…';
+}
+
+async function refreshStatus(){
+  try {
+    const s = await api('/status');
+    const ai = s.shadow_ai || {};
+    document.getElementById('status-obs').textContent = ai.observations ?? '?';
+    document.getElementById('status-people').textContent = ai.tracked_people ?? '?';
+    document.getElementById('status-decisions').textContent = ai.decisions_learned ?? '?';
+    document.getElementById('status-insights').textContent = ai.pending_insights ?? '?';
+    setConnDot('on');
+  } catch (e) {
+    setConnDot('off');
+  }
+}
+
+async function refreshObservers(){
+  try {
+    const r = await api('/observers/status');
+    const obs = r.observers || {};
+    const el = document.getElementById('observers-card');
+    el.innerHTML = Object.entries(obs).map(([name, info]) => {
+      const badge = info.alive ? 'green' : 'red';
+      const status = info.alive ? 'alive' : (info.cancelled ? 'cancelled' : 'dead');
+      const note = info.error ? `<span class="meta">${info.error}</span>` : '';
+      return `<div class="row"><span class="label">${name}</span>
+                <span><span class="badge ${badge}">${status}</span> ${note}</span></div>`;
+    }).join('');
+  } catch (e) {
+    document.getElementById('observers-card').innerHTML =
+      `<div style="color:var(--red)">${e.message}</div>`;
+  }
+}
+
+async function refreshAbilities(){
+  try {
+    const r = await api('/shikigami');
+    const abilities = r.shikigami || [];
+    const sel = document.getElementById('ability-select');
+    sel.innerHTML = '<option value="">auto-select</option>' +
+      abilities.map(a => `<option value="${a.type}">${a.emoji} ${a.name}</option>`).join('');
+    const card = document.getElementById('abilities-card');
+    card.innerHTML = abilities.map(a => `
+      <div class="ability-row"><span class="name">${a.emoji} ${a.name}</span>
+        <span class="desc">${a.power || ''}</span></div>`).join('');
+  } catch (e) {
+    document.getElementById('abilities-card').innerHTML =
+      `<div style="color:var(--red)">${e.message}</div>`;
+  }
+}
+
+function renderInsight(i){
+  const sev = i.severity || 'low';
+  const kind = i.kind || '?';
+  const text = i.explanation || i.reasoning || '';
+  const meta = Object.entries(i)
+    .filter(([k,v]) => !['kind','severity','explanation','reasoning','emitted_at'].includes(k))
+    .filter(([k,v]) => typeof v !== 'object' || Array.isArray(v))
+    .slice(0,5)
+    .map(([k,v]) => `${k}=${Array.isArray(v)?v.join(','):v}`).join(' · ');
+  return `<div class="insight ${sev}">
+    <div class="kind">${kind} · ${sev}</div>
+    <div class="text">${text}</div>
+    ${meta ? `<div class="meta">${meta}</div>` : ''}
+  </div>`;
+}
+
+async function refreshInsights(){
+  try {
+    const r = await api('/insights/recent?limit=15');
+    const list = r.insights || [];
+    const el = document.getElementById('insights-card');
+    if (!list.length){
+      el.innerHTML = '<div style="color:var(--muted);font-size:13px">No insights yet — the proactive scanner needs data + time.</div>';
+      return;
+    }
+    el.innerHTML = list.slice().reverse().map(renderInsight).join('');
+  } catch (e) {
+    document.getElementById('insights-card').innerHTML =
+      `<div style="color:var(--red)">${e.message}</div>`;
+  }
+}
+
+document.getElementById('summon-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const ability = document.getElementById('ability-select').value;
+  const query = document.getElementById('ability-query').value.trim();
+  if (!query) return;
+  const btn = document.getElementById('summon-btn');
+  const out = document.getElementById('summon-output');
+  btn.disabled = true; btn.textContent = 'Summoning…';
+  out.style.display = 'block'; out.textContent = '…';
+  try {
+    const payload = {question: query};
+    if (ability) payload.shikigami = ability;
+    const r = await api('/shikigami/summon', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload),
+    });
+    const header = '━━━ ' + (r.ability || '?') +
+      (r.auto_selected ? ' (auto-selected)' : '') + ' ━━━\n\n';
+    out.textContent = header + (r.output || '<no output>');
+  } catch (err) {
+    out.textContent = 'ERROR: ' + err.message;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Summon';
+  }
+});
+
+// WebSocket for real-time insight push.
+function connectWs(){
+  try {
+    const wsUrl = (API.replace(/^http/, 'ws') || (location.protocol === 'https:' ? 'wss:' : 'ws:') + '//' + location.host) + '/ws';
+    const ws = new WebSocket(wsUrl);
+    ws.onopen = () => setConnDot('on');
+    ws.onclose = () => { setConnDot('off'); setTimeout(connectWs, 5000); };
+    ws.onerror = () => setConnDot('off');
+    ws.onmessage = (ev) => {
+      try {
+        const msg = JSON.parse(ev.data);
+        // The daemon's WSMessage shape is {type, data, ...} where `type` is
+        // the lowercase enum value ("insight", "observe", …). Insight payloads
+        // land in data.insight.
+        const insight = msg.data && msg.data.insight;
+        if (insight || msg.type === 'insight') refreshInsights();
+        if (msg.type === 'observe') refreshStatus();
+      } catch (e) {}
+    };
+  } catch (e) {
+    setTimeout(connectWs, 5000);
+  }
+}
+
+// Initial load + periodic polling as a fallback.
+refreshStatus(); refreshObservers(); refreshAbilities(); refreshInsights();
+setInterval(refreshStatus, 5000);
+setInterval(refreshInsights, 15000);
+setInterval(refreshObservers, 30000);
+connectWs();
+</script>
+</body>
+</html>

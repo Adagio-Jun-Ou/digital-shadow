@@ -1,0 +1,36 @@
+{
+  "name": "ShadowOS — AI Shadow Assistant",
+  "short_name": "Shadow",
+  "description": "Your personal AI shadow. Voice-controlled cognitive assistant that learns your patterns, monitors your health, and anticipates your needs.",
+  "start_url": "/shadow",
+  "scope": "/shadow",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0a0f",
+  "theme_color": "#7c5cff",
+  "dir": "ltr",
+  "lang": "en",
+  "icons": [
+    { "src": "/static/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/static/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/static/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/static/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "categories": ["productivity", "utilities", "health"],
+  "share_target": {
+    "action": "/shadow",
+    "method": "POST",
+    "enctype": "application/x-www-form-urlencoded",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "shortcuts": [
+    { "name": "Chat", "url": "/shadow?tab=chat", "description": "Chat with ShadowOS", "icons": [{"src": "/static/icon-192.png", "sizes": "192x192"}] },
+    { "name": "Voice Summon", "url": "/shadow?tab=chat", "description": "Voice command to ShadowOS", "icons": [{"src": "/static/icon-192.png", "sizes": "192x192"}] },
+    { "name": "Device Status", "url": "/shadow?tab=device", "description": "View device health and location", "icons": [{"src": "/static/icon-192.png", "sizes": "192x192"}] },
+    { "name": "Settings", "url": "/shadow?tab=settings", "description": "Connection and device settings", "icons": [{"src": "/static/icon-192.png", "sizes": "192x192"}] }
+  ]
+}

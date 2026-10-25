@@ -1,0 +1,23 @@
+{
+  "WFWorkflowName": "Shadow Agents",
+  "WFWorkflowIcon": {
+    "WFWorkflowIconStartColor": 4294967295,
+    "WFWorkflowIconGlyphNumber": 0
+  },
+  "WFWorkflowActions": [
+    {
+      "WFWorkflowActionIdentifier": "is.workflow.actions.downloadurl",
+      "WFWorkflowActionParameters": {
+        "WFURL": "https://your-host.your-tailnet.ts.net:8766/os/arise",
+        "WFHTTPMethod": "GET",
+        "WFHTTPHeaders": {}
+      }
+    },
+    {
+      "WFWorkflowActionIdentifier": "is.workflow.actions.showresult",
+      "WFWorkflowActionParameters": {}
+    }
+  ],
+  "WFWorkflowImportQuestions": [],
+  "WFWorkflowMinimumClientVersion": 411
+}

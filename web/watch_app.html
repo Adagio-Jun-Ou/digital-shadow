@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>ShadowOS</title>
+<link rel="manifest" href="manifest.json">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg:#0a0a12;--surface:#14141f;--surface2:#1c1c2a;
+--border:#2a2a3a;--text:#e8e8f0;--text2:#8888a0;--text3:#555568;
+--accent:#7c5cff;--green:#00dc82;--red:#ff4d6a;--orange:#ffb84d;--blue:#4dc9f6;
+--r:12px;--rs:6px;
+--safe-b:env(safe-area-inset-bottom,0px);
+--safe-t:env(safe-area-inset-top,0px);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Compact Text','SF Pro Text',sans-serif;background:var(--bg);color:var(--text);line-height:1.3;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;overflow:hidden}
+
+/* ═══ HEADER ═══ */
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:calc(var(--safe-t)+3px) 8px 3px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;min-height:24px}
+.hdr h1{font-size:11px;font-weight:800;letter-spacing:-.2px;background:linear-gradient(135deg,var(--accent),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.conn{width:5px;height:5px;border-radius:50%;background:var(--text3);transition:all .3s}
+.conn.on{background:var(--green);box-shadow:0 0 4px var(--green)}
+.conn.off{background:var(--red);box-shadow:0 0 4px var(--red)}
+
+/* ═══ NAV DOTS ═══ */
+.nav{display:flex;gap:5px;padding:4px 8px 2px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;justify-content:center}
+.nav .dot{width:6px;height:6px;border-radius:50%;background:var(--text3);cursor:pointer;transition:all .15s}
+.nav .dot.on{background:var(--accent);box-shadow:0 0 6px var(--accent);transform:scale(1.3)}
+
+/* ═══ TABS ═══ */
+main{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.tab{display:none;min-height:100%}
+.tab.on{display:flex;flex-direction:column}
+
+/* ═══ HEALTH TAB ═══ */
+.hg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px 6px}
+.hb{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:5px 4px;text-align:center}
+.hb .v{font-size:16px;font-weight:800;line-height:1}
+.hb .l{font-size:7px;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hb.g .v{color:var(--green)}.hb.r .v{color:var(--red)}.hb.o .v{color:var(--orange)}.hb.b .v{color:var(--blue)}.hb.a .v{color:var(--accent)}
+.hf{grid-column:span 2;background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:6px;text-align:center;margin:0 6px 4px}
+.hf .v{font-size:10px;font-weight:700;line-height:1.3}
+.hf .l{font-size:7px;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;margin-top:2px}
+.str{height:4px;border-radius:2px;background:var(--surface2);margin-top:3px;overflow:hidden}
+.str .f{height:100%;border-radius:2px;transition:width .3s}
+.str .f.g{background:var(--green)}.str .f.o{background:var(--orange)}.str .f.r{background:var(--red)}.str .f.b{background:var(--blue)}
+
+/* ═══ STATUS TAB ═══ */
+.sg{padding:4px 6px}
+.si{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border)}
+.si:last-child{border-bottom:none}
+.si .k{font-size:8.5px;color:var(--text2);text-transform:uppercase;letter-spacing:.3px}
+.si .w{font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px}
+.si .w.h{background:rgba(0,220,130,.12);color:var(--green)}
+.si .w.d{background:rgba(255,184,77,.12);color:var(--orange)}
+.si .w.o{background:rgba(255,77,106,.12);color:var(--red)}
+.si .w.k{background:rgba(85,85,104,.12);color:var(--text3)}
+
+/* ═══ VOICE TAB ═══ */
+.va{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:8px;gap:8px}
+.vb{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--green));border:none;color:#fff;font-size:22px;cursor:pointer;box-shadow:0 3px 12px rgba(124,92,255,.3);transition:all .15s;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent}
+.vb:active{transform:scale(.92)}
+.vb.rec{background:linear-gradient(135deg,var(--red),var(--orange));animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{transform:scale(1);box-shadow:0 3px 12px rgba(255,77,106,.3)}50%{transform:scale(1.06);box-shadow:0 3px 18px rgba(255,77,106,.5)}}
+.vt{font-size:10px;color:var(--text2);text-align:center;max-width:150px;min-height:28px;word-wrap:break-word}
+.vr{font-size:10px;color:var(--text);text-align:center;max-width:160px;min-height:14px;word-wrap:break-word;background:var(--surface);border-radius:var(--rs);padding:6px;display:none}
+.vr.on{display:block}
+
+/* ═══ ACTIONS TAB ═══ */
+.ag{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px 6px}
+.ab{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:8px 4px;text-align:center;cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent}
+.ab:active{transform:scale(.95);border-color:var(--accent)}
+.ab .ic{font-size:18px;line-height:1}
+.ab .nm{font-size:8px;font-weight:700;color:var(--text2);margin-top:2px}
+
+/* ═══ CHAT TAB ═══ */
+.ca{flex:1;display:flex;flex-direction:column}
+.ml{flex:1;overflow-y:auto;padding:4px 6px;-webkit-overflow-scrolling:touch}
+.pt{font-size:9px;color:var(--orange);text-align:center;padding:2px}
+.mm{margin-bottom:4px;animation:fu .15s ease}
+@keyframes fu{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+.mm.u{text-align:right}
+.mb{display:inline-block;max-width:88%;padding:5px 8px;border-radius:10px;font-size:10px;line-height:1.35;word-wrap:break-word}
+.mm.u .mb{background:var(--accent);color:#fff;border-bottom-right-radius:3px}
+.mm.s .mb{background:var(--surface2);color:var(--text);border:1px solid var(--border);border-bottom-left-radius:3px}
+.mt{font-size:7px;color:var(--text3);margin-top:1px}
+.cb{display:flex;gap:4px;padding:3px 6px calc(3px + var(--safe-b));border-top:1px solid var(--border);background:var(--surface);flex-shrink:0}
+.cb input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:4px 8px;color:var(--text);font-size:10px;outline:none}
+.cb input:focus{border-color:var(--accent)}
+.cb button{background:var(--accent);color:#fff;border:none;width:26px;height:26px;border-radius:50%;font-size:10px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+
+/* ═══ OFFLINE ═══ */
+.off{position:absolute;top:calc(var(--safe-t)+26px);left:0;right:0;background:rgba(255,77,106,.15);color:var(--red);text-align:center;font-size:8px;font-weight:700;padding:2px 0;letter-spacing:.3px;display:none}
+.off.show{display:block}
+
+/* ═══ SCROLLBAR ═══ */
+::-webkit-scrollbar{width:2px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+/* ═══ RESPONSIVE ═══ */
+@media(min-width:224px){.hg{grid-template-columns:1fr 1fr 1fr}.ag{grid-template-columns:1fr 1fr 1fr}}
+@media(min-width:300px){.hb .v{font-size:20px}.mb{font-size:12px}.vt,.vr{font-size:11px}.ab .nm{font-size:9px}.si .k{font-size:9px}.si .w{font-size:10px}}
+</style>
+</head>
+<body>
+<div class="off" id="off">OFFLINE</div>
+<header class="hdr"><h1>ShadowOS</h1><span class="conn" id="conn"></span></header>
+<nav class="nav" id="nav">
+<div class="dot on" onclick="tab(0)"></div>
+<div class="dot" onclick="tab(1)"></div>
+<div class="dot" onclick="tab(2)"></div>
+<div class="dot" onclick="tab(3)"></div>
+<div class="dot" onclick="tab(4)"></div>
+</nav>
+
+<main>
+<!-- ═══ HEALTH ═══ -->
+<div id="t0" class="tab on">
+<div class="hg" id="healthG"></div>
+<div class="hf" id="stressF"><div class="l">Stress Level</div><div class="v" id="stressV">—</div><div class="str"><div class="f g" id="stressBar" style="width:0%"></div></div></div>
+</div>
+
+<!-- ═══ STATUS ═══ -->
+<div id="t1" class="tab">
+<div class="sg" id="statusG"></div>
+</div>
+
+<!-- ═══ VOICE ═══ -->
+<div id="t2" class="tab">
+<div class="va">
+<div class="vt" id="voiceT">Tap to speak</div>
+<div class="vr" id="voiceR"></div>
+<button class="vb" id="voiceB" onclick="toggleVoice()">&#x1f3a4;</button>
+</div>
+</div>
+
+<!-- ═══ ACTIONS ═══ -->
+<div id="t3" class="tab">
+<div class="ag" id="actG"></div>
+</div>
+
+<!-- ═══ CHAT ═══ -->
+<div id="t4" class="tab">
+<div class="ca">
+<div class="ml" id="msgs"></div><div id="pending" class="pt"></div>
+<div class="cb"><input type="text" id="inp" placeholder="Ask..." autocomplete="off"><button onclick="send()">&#x25B6;</button></div>
+</div>
+</div>
+</main>
+
+<script>
+const DURL='https://your-host.your-tailnet.ts.net:8766';
+ let C={url:localStorage.getItem('w_url')||DURL,key:localStorage.getItem('w_key')||'',on:false,tab:0,vRec:null,vListening:false,retryCount:0};
+ let healthData=null;
+ let statusData=null;
+ let refreshT=null;
+ 
+ function api(p,o={}){
+ const h={'Content-Type':'application/json'};if(C.key)h['X-API-Key']=C.key;
+ return fetch(C.url+p,{headers:h,...o}).then(r=>{
+ if(!r.ok)throw new Error(r.status);C.retryCount=0;return r.json();
+ }).catch(e=>{C.retryCount++;setConn(false);throw e})
+ }
+
+function tab(n){
+C.tab=n;
+document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',i===n));
+document.querySelectorAll('.nav .dot').forEach((d,i)=>d.classList.toggle('on',i===n));
+if(n===0)loadHealth();
+if(n===1)loadStatus();
+if(n===3)loadActions();
+}
+
+function setConn(on){C.on=on;const e=document.getElementById('conn');e.className='conn '+(on?'on':'off');
+document.getElementById('off').className='off'+(on?'':' show')}
+
+function hb(v,l,cls){return`<div class="hb ${cls}"><div class="v">${v}</div><div class="l">${l}</div></div>`}
+
+async function loadHealth(){
+const g=document.getElementById('healthG');
+try{
+const ctx=await api('/os/device/context');
+const h=ctx.health||{};
+healthData={hr:h.heart_rate,hrv:h.hrv,spo2:h.spo2,steps:h.step_count,sleep:h.sleep_minutes_last_24h,stress:h.stress_level,exercise:h.exercise_minutes,hr_rest:h.heart_rate_resting};
+let o='';
+o+=hb(h.heart_rate||'—','Heart',h.heart_rate>100?'r':'g');
+o+=hb(h.hrv?h.hrv.toFixed(0):'—','HRV','b');
+o+=hb(h.spo2?h.spo2.toFixed(0):'—','SpO2',h.spo2<95?'r':'g');
+o+=hb(h.step_count||0,'Steps','');
+o+=hb(h.exercise_minutes||0,'ExMin','a');
+o+=hb(h.sleep_minutes_last_24h?Math.round(h.sleep_minutes_last_24h/60)+'h':'—','Sleep','b');
+o+=hb(h.heart_rate_resting||'—','RHR','a');
+g.innerHTML=o;
+const sl=h.stress_level||'low';
+const sv=document.getElementById('stressV');
+const sb=document.getElementById('stressBar');
+const pct={low:20,moderate:45,high:70,critical:90}[sl]||20;
+const cls={low:'g',moderate:'o',high:'r',critical:'r'}[sl]||'g';
+sv.textContent=sl.charAt(0).toUpperCase()+sl.slice(1);
+sb.style.width=pct+'%';sb.className='f '+cls;
+setConn(true);
+}catch(e){g.innerHTML=hb('—','Err','r');setConn(false)}
+}
+
+async function loadStatus(){
+const g=document.getElementById('statusG');
+try{
+const h=await api('/os/health');const s=await api('/os/status');
+let o='';
+const mods=h.modules||{};
+let healthy=0,degraded=0,offline=0;
+for(const[k,v]of Object.entries(mods)){const st=v.status||'unknown';
+if(st==='healthy')healthy++;else if(st==='degraded')degraded++;else offline++}
+o+=si('Modules',h.module_count||'?',healthy===Object.keys(mods).length?'h':'d');
+o+=si('Agents',s.crew_size??'?','h');
+const dc=s.device_context_stats||{};
+o+=si('iPhone',dc.iphones_connected??0,'h');
+o+=si('Watch',dc.watches_connected??0,'h');
+o+=si('Laptop',dc.laptops_connected??0,'h');
+const da=s.daemon_status||{};
+if(da.phase)o+=si('Phase',da.phase,'h');
+o+=si('Uptime',s.uptime_seconds?fmtDur(s.uptime_seconds):'—','h');
+o+=si('Status',healthy>0&&offline===0?'Healthy':'Degraded',offline===0?'h':'d');
+g.innerHTML=o;setConn(true);
+}catch(e){g.innerHTML=si('Error','Cannot reach OS','o');setConn(false)}
+}
+
+function si(k,w,cls){return`<div class="si"><span class="k">${k}</span><span class="w ${cls}">${w}</span></div>`}
+
+function fmtDur(s){const h=Math.floor(s/3600);const m=Math.floor((s%3600)/60);return h>0?h+'h '+m+'m':m+'m'}
+
+function loadActions(){
+const g=document.getElementById('actG');
+const acts=[
+{ic:'\u2728',nm:'Summons',fn:()=>tab(2)},
+{ic:'\u{1f4ca}',nm:'Health',fn:()=>tab(0)},
+{ic:'\u{1f4ac}',nm:'Chat',fn:()=>tab(4)},
+{ic:'\u26a0',nm:'Status',fn:()=>tab(1)},
+{ic:'\u{1f3d7}',nm:'+Agent',fn:()=>quickAgent()},
+{ic:'\u{1f4f1}',nm:'Push',fn:()=>pushData()},
+];
+let o='';for(const a of acts)o+=`<div class="ab" onclick="(${a.fn.toString()})()"><div class="ic">${a.ic}</div><div class="nm">${a.nm}</div></div>`;
+g.innerHTML=o;
+}
+
+async function quickAgent(){
+try{await api('/os/arise',{method:'POST',body:JSON.stringify({name:'Watch '+Date.now().toString(36),objective:'Quick task from watch',template_id:'executor',priority:'medium'})});
+addMsg('shadow','Agent created');tab(4)}catch{addMsg('shadow','Failed')}
+}
+
+async function pushData(){
+try{
+const data={heart_rate:66+Math.floor(Math.random()*8),hrv:42+Math.floor(Math.random()*10),spo2:97+Math.floor(Math.random()*2),step_count:Math.floor(Math.random()*5000),sleep_minutes:420,stress_level:'low'};
+await api('/os/device/push',{method:'POST',body:JSON.stringify({device_type:'watch',device_id:'watch_pwa',data})});
+addMsg('shadow','Data pushed');loadHealth();
+}catch{addMsg('shadow','Push failed')}
+}
+
+function toggleVoice(){
+if(!('webkitSpeechRecognition'in window||'SpeechRecognition'in window)){addMsg('shadow','No voice');tab(4);return}
+if(C.vListening){stopVoice();return}
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+if(!C.vRec){C.vRec=new SR();C.vRec.continuous=false;C.vRec.interimResults=true;C.vRec.lang='en-US';
+C.vRec.onresult=e=>{const t=Array.from(e.results).map(r=>r[0].transcript).join('');document.getElementById('voiceT').textContent=t||'Listening...'};
+C.vRec.onend=()=>{C.vListening=false;document.getElementById('voiceB').classList.remove('rec');document.getElementById('voiceT').textContent='Tap to speak'};
+C.vRec.onerror=()=>{C.vListening=false;document.getElementById('voiceB').classList.remove('rec');document.getElementById('voiceT').textContent='Error — tap to retry'}}
+C.vListening=true;document.getElementById('voiceB').classList.add('rec');
+document.getElementById('voiceT').textContent='Listening...';
+const vr=document.getElementById('voiceR');vr.className='vr';
+C.vRec.start();
+}
+
+function stopVoice(){
+if(C.vRec){C.vRec.stop()}
+const t=document.getElementById('voiceT').textContent;
+if(t&&t!=='Listening...'&&t!=='Tap to speak'&&t!=='Error — tap to retry'){
+sendVoice(t);
+}else{C.vListening=false;document.getElementById('voiceB').classList.remove('rec');document.getElementById('voiceT').textContent='Tap to speak'}
+}
+
+async function sendVoice(text){
+document.getElementById('voiceT').textContent='Thinking...';
+try{
+const r=await api('/os/summon/text',{method:'POST',body:JSON.stringify({transcript:text})});
+const reply=r.spoken||r.action||r.result||JSON.stringify(r);
+const vr=document.getElementById('voiceR');
+vr.textContent=typeof reply==='string'?reply:JSON.stringify(reply);
+vr.className='vr on';
+document.getElementById('voiceT').textContent='Tap to speak';
+if(r.spoken&&'speechSynthesis'in window){const u=new SpeechSynthesisUtterance(r.spoken);u.rate=1.1;u.pitch=0.9;speechSynthesis.speak(u)}
+}catch{document.getElementById('voiceT').textContent='Failed — tap to retry'}
+}
+
+function addMsg(role,text){
+const c=document.getElementById('msgs');
+const d=document.createElement('div');d.className='mm '+(role==='user'?'u':'s');
+const b=document.createElement('div');b.className='mb';b.textContent=text;
+d.appendChild(b);c.appendChild(d);c.scrollTop=c.scrollHeight;
+}
+
+ const pendingMsgs=[];
+ 
+ function addMsg(role,text){
+ const c=document.getElementById('msgs');
+ const d=document.createElement('div');d.className='mm '+(role==='user'?'u':'s');
+ const b=document.createElement('div');b.className='mb';b.textContent=text;
+ d.appendChild(b);c.appendChild(d);c.scrollTop=c.scrollHeight;
+ if(role==='user'&&!C.on){pendingMsgs.push(text);showPending()}
+ }
+ 
+ function showPending(){
+ const p=document.getElementById('pending');if(!p)return;
+ p.textContent=pendingMsgs.length>0?pendingMsgs.length+' pending':'';
+ }
+
+ async function send(){
+ const i=document.getElementById('inp');const t=i.value.trim();if(!t)return;
+ i.value='';addMsg('user',t);
+ if(!C.on){return}
+ try{const r=await api('/os/query',{method:'POST',body:JSON.stringify({query:t,confidence:0.8})});
+ const reply=r.response||r.result||r.answer||r.spoken||JSON.stringify(r);
+ addMsg('shadow',typeof reply==='string'?reply:JSON.stringify(reply));
+ }catch{addMsg('shadow','Cannot reach OS')}
+ }
+ 
+ async function flushPending(){
+ while(pendingMsgs.length>0&&C.on){
+ const t=pendingMsgs.shift();showPending();
+ try{const r=await api('/os/query',{method:'POST',body:JSON.stringify({query:t,confidence:0.8})});
+ const reply=r.response||r.result||r.answer||r.spoken||JSON.stringify(r);
+ addMsg('shadow',typeof reply==='string'?reply:JSON.stringify(reply));
+ }catch{pendingMsgs.unshift(t);break}
+ }
+ showPending();
+ }
+
+ document.getElementById('inp').addEventListener('keydown',e=>{if(e.key==='Enter')send()});
+ 
+ window.addEventListener('online',()=>{setConn(true);loadHealth();loadStatus();flushPending()});
+ window.addEventListener('offline',()=>setConn(false));
+
+// Swipe navigation
+let sx=0;
+document.addEventListener('touchstart',e=>{sx=e.touches[0].clientX},{passive:true});
+document.addEventListener('touchend',e=>{
+const dx=e.changedTouches[0].clientX-sx;
+if(Math.abs(dx)>40){
+if(dx>0&&C.tab>0)tab(C.tab-1);
+else if(dx<0&&C.tab<4)tab(C.tab+1);
+}
+},{passive:true});
+
+// Crown/digital crown scroll on watchOS
+document.addEventListener('wheel',e=>{
+if(e.deltaY>0&&C.tab<4)tab(C.tab+1);
+else if(e.deltaY<0&&C.tab>0)tab(C.tab-1);
+},{passive:true});
+
+// Auto-refresh health every 30s when on health tab
+setInterval(()=>{if(C.tab===0&&C.on)loadHealth()},30000);
+// Refresh status every 60s
+setInterval(()=>{if(C.tab===1&&C.on)loadStatus()},60000);
+
+// Initial load
+loadHealth();loadStatus();loadActions();
+setTimeout(()=>{setConn(true)},500);
+</script>
+</body>
+</html>

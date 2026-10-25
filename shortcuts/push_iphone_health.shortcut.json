@@ -1,0 +1,27 @@
+{
+  "WFWorkflowName": "Push iPhone Health",
+  "WFWorkflowIcon": {
+    "WFWorkflowIconStartColor": 65280,
+    "WFWorkflowIconGlyphNumber": 0
+  },
+  "WFWorkflowActions": [
+    {
+      "WFWorkflowActionIdentifier": "is.workflow.actions.downloadurl",
+      "WFWorkflowActionParameters": {
+        "WFURL": "https://your-host.your-tailnet.ts.net:8766/os/device/iphone",
+        "WFHTTPMethod": "POST",
+        "WFHTTPBodyType": "JSON",
+        "WFHTTPBody": "{\"device_id\": \"iphone_siri\", \"data\": {\"health\": {\"heart_rate\": 72, \"hrv\": 45, \"steps\": 8500, \"sleep_hours\": 7.5, \"spo2\": 98, \"stress_level\": \"low\", \"active_energy\": 350}, \"battery\": {\"level\": 85, \"charging\": false}, \"notifications\": []}}",
+        "WFHTTPHeaders": {
+          "Content-Type": "application/json"
+        }
+      }
+    },
+    {
+      "WFWorkflowActionIdentifier": "is.workflow.actions.showresult",
+      "WFWorkflowActionParameters": {}
+    }
+  ],
+  "WFWorkflowImportQuestions": [],
+  "WFWorkflowMinimumClientVersion": 411
+}

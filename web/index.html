@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shadow AI Dashboard</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0f;--surface:#12121a;--surface2:#1a1a28;--border:#2a2a3a;--text:#e0e0f0;--text2:#8888aa;--accent:#7b5cff;--accent2:#5cffb5;--danger:#ff5c7b;--warning:#ffc75c;--info:#5cb8ff;--radius:8px}
+body{font-family:'SF Pro',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.5;min-height:100vh}
+.container{max-width:1400px;margin:0 auto;padding:16px}
+header{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+header h1{font-size:18px;font-weight:600;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header-right{display:flex;gap:12px;align-items:center;font-size:13px;color:var(--text2)}
+.status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px}
+.status-dot.online{background:var(--accent2);box-shadow:0 0 6px var(--accent2)}
+.status-dot.offline{background:var(--danger)}
+nav{display:flex;gap:4px;padding:12px 0;flex-wrap:wrap}
+nav button{background:var(--surface);border:1px solid var(--border);color:var(--text2);padding:8px 16px;border-radius:var(--radius);cursor:pointer;font-size:13px;transition:all .2s}
+nav button:hover{background:var(--surface2);color:var(--text);border-color:var(--accent)}
+nav button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.grid{display:grid;gap:16px}
+.grid-2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.grid-3{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.grid-4{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;transition:border-color .2s}
+.card:hover{border-color:var(--accent)}
+.card h3{font-size:14px;font-weight:600;margin-bottom:8px;color:var(--accent2)}
+.card p,.card pre{font-size:13px;color:var(--text2)}
+.card .value{font-size:24px;font-weight:700;color:var(--text);margin:4px 0}
+.stats-bar{display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;min-width:120px}
+.stat .label{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px}
+.stat .number{font-size:20px;font-weight:700;margin-top:2px}
+.chat-container{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.chat-messages{height:400px;overflow-y:auto;padding:12px;font-size:13px}
+.chat-input{display:flex;border-top:1px solid var(--border)}
+.chat-input input{flex:1;background:var(--surface2);border:none;color:var(--text);padding:12px;font-size:14px;outline:none}
+.chat-input button{background:var(--accent);color:#fff;border:none;padding:12px 20px;cursor:pointer;font-weight:600}
+.chat-input button:hover{background:#6a4ce0}
+.msg{margin-bottom:8px;padding:8px 12px;border-radius:6px;max-width:80%}
+.msg.user{background:var(--accent);color:#fff;margin-left:auto}
+.msg.assistant{background:var(--surface2);color:var(--text)}
+.msg .time{font-size:10px;opacity:.6;margin-top:4px}
+.memory-block{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;overflow:hidden}
+.memory-block-header{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--border);font-size:12px;font-weight:600}
+.memory-block-content{padding:12px;font-size:13px;white-space:pre-wrap;max-height:200px;overflow-y:auto;font-family:'SF Mono',Monaco,monospace}
+.memory-block-meta{font-size:10px;color:var(--text2);padding:4px 12px;border-top:1px solid var(--border)}
+.btn{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:4px;cursor:pointer;font-size:12px;transition:all .2s}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.danger{border-color:var(--danger);color:var(--danger)}
+.btn.danger:hover{background:var(--danger);color:#fff}
+.ability-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.ability-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center;cursor:pointer;transition:all .2s}
+.ability-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.ability-card .icon{font-size:32px;margin-bottom:8px}
+.ability-card .name{font-size:13px;font-weight:600;margin-bottom:4px}
+.ability-card .desc{font-size:11px;color:var(--text2)}
+.stream-output{background:#0d1117;border:1px solid var(--border);border-radius:var(--radius);padding:16px;font-family:'SF Mono',Monaco,monospace;font-size:13px;white-space:pre-wrap;min-height:200px;max-height:500px;overflow-y:auto}
+.insight-card{background:var(--surface);border-left:3px solid var(--warning);padding:12px;margin-bottom:8px;border-radius:0 var(--radius) var(--radius) 0}
+.insight-card.critical{border-left-color:var(--danger)}
+.insight-card.high{border-left-color:var(--warning)}
+.insight-card.medium{border-left-color:var(--info)}
+.insight-card.low{border-left-color:var(--text2)}
+input,textarea,select{background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:8px 12px;font-size:13px;width:100%}
+input:focus,textarea:focus{outline:none;border-color:var(--accent)}
+textarea{min-height:80px;resize:vertical;font-family:'SF Mono',Monaco,monospace}
+.log-line{font-size:12px;padding:2px 0;border-bottom:1px solid var(--border);font-family:'SF Mono',Monaco,monospace}
+.progress-bar{background:var(--border);border-radius:4px;height:6px;overflow:hidden;margin-top:4px}
+.progress-bar .fill{height:100%;border-radius:4px;transition:width .3s}
+@media(max-width:768px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr}header h1{font-size:15px}.stats-bar{flex-direction:column}}
+</style>
+</head>
+<body>
+<header>
+<h1>Shadow AI</h1>
+<div class="header-right">
+<span><span class="status-dot" id="statusDot"></span><span id="statusText">connecting...</span></span>
+<span id="obsCount">0 obs</span>
+<span id="insightCount">0 insights</span>
+<span id="uptimeText"></span>
+</div>
+</header>
+
+<div class="container">
+<nav>
+<button class="active" onclick="switchTab('overview')">Overview</button>
+<button onclick="switchTab('ask')">Ask</button>
+<button onclick="switchTab('abilities')">Abilities</button>
+<button onclick="switchTab('memory')">Memory</button>
+<button onclick="switchTab('learn')">Learn</button>
+<button onclick="switchTab('insights')">Insights</button>
+<button onclick="switchTab('monitor')">Monitor</button>
+</nav>
+
+<div id="tab-overview" class="tab-content active">
+<div class="stats-bar" id="statsBar">
+<div class="stat"><div class="label">Observations</div><div class="number" id="stat-obs">0</div></div>
+<div class="stat"><div class="label">People Tracked</div><div class="number" id="stat-people">0</div></div>
+<div class="stat"><div class="label">Decisions</div><div class="number" id="stat-decisions">0</div></div>
+<div class="stat"><div class="label">Patterns</div><div class="number" id="stat-patterns">0</div></div>
+<div class="stat"><div class="label">Insights</div><div class="number" id="stat-insights">0</div></div>
+</div>
+<div class="grid grid-2">
+<div class="card" id="environmentCard">
+<h3>Environment</h3>
+<div id="envInfo"><p>Loading...</p></div>
+</div>
+<div class="card" id="abilityCard">
+<h3>Recent Activity</h3>
+<div id="recentActivity"><p>No recent activity</p></div>
+</div>
+</div>
+<div class="card" style="margin-top:16px">
+<h3>Quick Actions</h3>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+<button class="btn" onclick="quickAsk('What is happening around me right now?')">Environment Snapshot</button>
+<button class="btn" onclick="quickAsk('What patterns have you noticed?')">Pattern Analysis</button>
+<button class="btn" onclick="quickAsk('What commitments have I made?')">Check Commitments</button>
+<button class="btn" onclick="quickAsk('What will happen next?')">Predict Next</button>
+<button class="btn" onclick="fetchInsights()">Refresh Insights</button>
+</div>
+</div>
+</div>
+
+<div id="tab-ask" class="tab-content">
+<div class="chat-container">
+<div class="chat-messages" id="chatMessages"></div>
+<div class="chat-input">
+<input type="text" id="chatInput" placeholder="Ask Shadow AI anything..." onkeydown="if(event.key==='Enter')sendChat()">
+<button onclick="sendChat()">Send</button>
+</div>
+</div>
+<div class="card" style="margin-top:12px">
+<h3>Stream Mode <label style="float:right;font-size:12px;cursor:pointer"><input type="checkbox" id="streamMode" checked> SSE Stream</label></h3>
+</div>
+</div>
+
+<div id="tab-abilities" class="tab-content">
+<div class="ability-grid" id="abilityGrid"></div>
+<div class="stream-output" id="abilityOutput">Select an ability above to use it.</div>
+</div>
+
+<div id="tab-memory" class="tab-content">
+<div class="card" style="margin-bottom:16px">
+<h3>Context Window Budget</h3>
+<div id="budgetInfo"><p>Loading...</p></div>
+</div>
+<div id="memoryBlocks"></div>
+<div class="card" style="margin-top:16px">
+<h3>Edit Memory</h3>
+<div class="grid grid-2">
+<div><label style="font-size:12px;color:var(--text2)">Block Label</label><input id="memLabel" placeholder="e.g., human, recent, goals"></div>
+<div><label style="font-size:12px;color:var(--text2)">Action</label>
+<select id="memAction"><option value="replace">Replace</option><option value="insert">Insert</option><option value="rethink">Rethink</option></select></div>
+</div>
+<div style="margin-top:8px"><label style="font-size:12px;color:var(--text2)">Old String (for replace)</label><input id="memOld" placeholder="Exact string to find"></div>
+<div style="margin-top:8px"><label style="font-size:12px;color:var(--text2)">New Content</label><textarea id="memNew" placeholder="New content..."></textarea></div>
+<div style="margin-top:8px;display:flex;gap:8px"><button class="btn" onclick="editMemory()">Apply Edit</button><button class="btn" onclick="refreshMemory()">Refresh</button></div>
+</div>
+</div>
+
+<div id="tab-learn" class="tab-content">
+<div class="grid grid-2">
+<div class="card">
+<h3>Track Person</h3>
+<input id="trackName" placeholder="Person name" style="margin-bottom:8px">
+<input id="trackDevices" placeholder="MAC addresses (comma separated)">
+<button class="btn" style="margin-top:8px" onclick="trackPerson()">Track</button>
+<div id="trackResult" style="margin-top:8px;font-size:13px"></div>
+</div>
+<div class="card">
+<h3>Track Decision</h3>
+<input id="decSituation" placeholder="Situation" style="margin-bottom:8px">
+<input id="decChoice" placeholder="Your choice" style="margin-bottom:8px">
+<input id="decOutcome" placeholder="Outcome" style="margin-bottom:8px">
+<input id="decSatisfaction" type="number" min="1" max="10" value="7" placeholder="Satisfaction 1-10">
+<button class="btn" style="margin-top:8px" onclick="trackDecision()">Track</button>
+<div id="decResult" style="margin-top:8px;font-size:13px"></div>
+</div>
+<div class="card">
+<h3>Learn Pattern</h3>
+<input id="patCause" placeholder="Cause (e.g., 'working late')" style="margin-bottom:8px">
+<input id="patEffect" placeholder="Effect (e.g., 'morning tiredness')">
+<button class="btn" style="margin-top:8px" onclick="learnPattern()">Learn</button>
+<div id="patResult" style="margin-top:8px;font-size:13px"></div>
+</div>
+<div class="card">
+<h3>Observe Event</h3>
+<input id="obsType" placeholder="Type (e.g., terminal_command, file_change)" style="margin-bottom:8px">
+<textarea id="obsContent" placeholder='{"command": "git commit"}'></textarea>
+<button class="btn" style="margin-top:8px" onclick="observeEvent()">Observe</button>
+<div id="obsResult" style="margin-top:8px;font-size:13px"></div>
+</div>
+</div>
+</div>
+
+<div id="tab-insights" class="tab-content">
+<div class="card" style="margin-bottom:16px">
+<div style="display:flex;justify-content:space-between;align-items:center">
+<h3>Proactive Insights</h3>
+<button class="btn" onclick="fetchInsights()">Refresh</button>
+</div>
+</div>
+<div id="insightsList"><p style="color:var(--text2)">Loading insights...</p></div>
+</div>
+
+<div id="tab-monitor" class="tab-content">
+<div class="grid grid-2">
+<div class="card">
+<h3>Health Check</h3>
+<pre id="healthOutput" style="font-size:12px;max-height:300px;overflow-y:auto">Loading...</pre>
+</div>
+<div class="card">
+<h3>Metrics</h3>
+<pre id="metricsOutput" style="font-size:12px;max-height:300px;overflow-y:auto">Loading...</pre>
+</div>
+</div>
+<div class="card" style="margin-top:16px">
+<h3>Event Bus</h3>
+<pre id="eventBusOutput" style="font-size:12px;max-height:200px;overflow-y:auto">Loading...</pre>
+</div>
+</div>
+</div>
+
+<script>
+const API=document.documentElement.dataset.api||window.__SHADOW_API_URL__||'http://127.0.0.1:8765';
+const ABILITIES=[
+{name:'Oracle',type:'oracle',icon:'&#x1F40D;',desc:'Monte Carlo + Bayesian prediction'},
+{name:'X-Ray',type:'x_ray',icon:'&#x1F441;',desc:'Device fingerprinting + signal triangulation'},
+{name:'Life Pulse',type:'life_pulse',icon:'&#x1F493;',desc:'Constellation matching'},
+{name:'Perfect Memory',type:'perfect_memory',icon:'&#x1F9E0;',desc:'Temporal + semantic search'},
+{name:'Pattern Sight',type:'pattern_sight',icon:'&#x1F575;',desc:'FFT + causation analysis'},
+{name:'Social Radar',type:'social_radar',icon:'&#x1F4E1;',desc:'Behavior + RL prediction'},
+{name:'Intent Seer',type:'intent_seer',icon:'&#x1F3AF;',desc:'Markov chain prediction'},
+{name:'Omni Sense',type:'omni_sense',icon:'&#x1F52E;',desc:'Sensor fusion + environment model'},
+{name:'Shadow Council',type:'shadow_council',icon:'&#x1F465;',desc:'Decision learning'},
+{name:'Reality Forge',type:'reality_forge',icon:'&#x1F528;',desc:'File + command execution'}
+];
+let ws=null;
+function switchTab(name){document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));document.getElementById('tab-'+name).classList.add('active');event.target.classList.add('active');if(name==='memory')refreshMemory();if(name==='monitor')refreshMonitor();if(name==='insights')fetchInsights()}
+async function api(path,opts={}){try{const r=await fetch(API+path,{headers:{'Content-Type':'application/json',...opts.headers},...opts});if(!r.ok)throw new Error(`${r.status} ${r.statusText}`);return await r.json()}catch(e){console.error('API error:',e);return null}}
+async function post(path,body){return api(path,{method:'POST',body:JSON.stringify(body)})}
+async function refreshStatus(){const d=await api('/status');if(!d){document.getElementById('statusDot').className='status-dot offline';document.getElementById('statusText').textContent='offline';return}document.getElementById('statusDot').className='status-dot online';document.getElementById('statusText').textContent='online';const s=d.shadow_ai||{};document.getElementById('stat-obs').textContent=s.observations||0;document.getElementById('stat-people').textContent=s.tracked_people||0;document.getElementById('stat-decisions').textContent=s.decisions_learned||0;document.getElementById('stat-patterns').textContent=s.patterns_known||0;document.getElementById('stat-insights').textContent=s.pending_insights||0;document.getElementById('obsCount').textContent=(s.observations||0)+' obs';document.getElementById('insightCount').textContent=(s.pending_insights||0)+' insights'}
+async function refreshSnapshot(){const d=await api('/snapshot');if(!d)return;const el=document.getElementById('envInfo');el.innerHTML=`<p><strong>Location:</strong> ${d.location||'unknown'} | <strong>Network:</strong> ${d.network||'none'}</p><p><strong>Devices:</strong> ${d.devices_nearby||0} | <strong>People:</strong> ${d.people_present?.join(', ')||'none'}</p><p><strong>Activity:</strong> ${d.activity?.join(' → ')||'none'} | <strong>Commitments:</strong> ${d.commitments||0}</p><p><strong>Time:</strong> ${d.time||'?'}</p>`;const ra=document.getElementById('recentActivity');if(d.activity?.length)ra.innerHTML=d.activity.slice(-8).map(a=>`<div class="log-line">${a}</div>`).join('');else ra.innerHTML='<p>No recent activity</p>'}
+async function sendChat(){const input=document.getElementById('chatInput');const q=input.value.trim();if(!q)return;const msgs=document.getElementById('chatMessages');msgs.innerHTML+=`<div class="msg user">${esc(q)}<div class="time">${new Date().toLocaleTimeString()}</div></div>`;input.value='';const useStream=document.getElementById('streamMode').checked;if(useStream){try{const r=await fetch(API+'/ask/stream',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q})});if(r.ok&&r.body){const reader=r.body.getReader();const decoder=new TextDecoder();let responseText='';msgs.innerHTML+=`<div class="msg assistant" id="streaming-msg"></div>`;const msgEl=document.getElementById('streaming-msg');while(true){const {done,value}=await reader.read();if(done)break;const chunk=decoder.decode(value,{stream:true});const lines=chunk.split('\n');for(const line of lines){if(line.startsWith('data: ')){const data=line.slice(6);if(data==='[DONE]')continue;try{const j=JSON.parse(data);if(j.choices?.[0]?.delta?.content)responseText+=j.choices[0].delta.content}catch(e){}}}}msgEl.innerHTML=esc(responseText)+`<div class="time">${new Date().toLocaleTimeString()}</div>`;msgEl.removeAttribute('id')}else{const d=await r.json();msgs.innerHTML+=`<div class="msg assistant">${esc(d.response||d.error||'No response')}<div class="time">${new Date().toLocaleTimeString()}</div></div>`}}catch(e){msgs.innerHTML+=`<div class="msg assistant" style="background:var(--danger)">Error: ${esc(e.message)}</div>`}}else{const d=await post('/ask',{question:q});msgs.innerHTML+=`<div class="msg assistant">${esc(d?.unified_response||d?.response||'No response')}<div class="time">${new Date().toLocaleTimeString()}</div></div>`}msgs.scrollTop=msgs.scrollHeight}
+async function quickAsk(q){switchTab('ask');document.getElementById('chatInput').value=q;await sendChat()}
+function esc(s){if(!s)return'';const d=document.createElement('div');d.textContent=String(s);return d.innerHTML}
+function initAbilities(){const grid=document.getElementById('abilityGrid');grid.innerHTML=ABILITIES.map(a=>`<div class="ability-card" onclick="useAbility('${a.type}')"><div class="icon">${a.icon}</div><div class="name">${a.name}</div><div class="desc">${a.desc}</div></div>`).join('')}
+async function useAbility(type){const q=type.replace(/_/g,' ')+' status';document.getElementById('abilityOutput').textContent='Using '+type+'...';const d=await post('/shikigami/summon',{ability:type,query:q});document.getElementById('abilityOutput').textContent=d?.output||d?.result||d?.unified_response||JSON.stringify(d,null,2)||'No response'}
+async function refreshMemory(){const d=await api('/memory');if(!d)return;const blocksDiv=document.getElementById('memoryBlocks');if(d.blocks){blocksDiv.innerHTML=Object.entries(d.blocks).map(([k,v])=>`<div class="memory-block"><div class="memory-block-header"><span>${k}</span><span>${v.chars||0}/${v.limit||2000}</span></div><div class="memory-block-content">${esc(v.value||'(empty)')}</div><div class="memory-block-meta">chars: ${v.chars||0} / ${v.limit||2000}</div></div>`).join('')}const budgetD=await api('/memory/budget');const budgetEl=document.getElementById('budgetInfo');if(budgetD){budgetEl.innerHTML=`<p>Total tokens: ${budgetD.total_tokens_used||0} / ${budgetD.max_context_tokens||8192} (${((budgetD.utilization||0)*100).toFixed(1)}%)</p><div class="progress-bar"><div class="fill" style="width:${(budgetD.utilization||0)*100}%;background:${budgetD.utilization>0.9?'var(--danger)':budgetD.utilization>0.7?'var(--warning)':'var(--accent2)'}"></div></div>${Object.entries(budgetD.sections||{}).map(([k,v])=>`<div style="font-size:12px;margin-top:4px">${k}: ${v.tokens_used||0}/${v.tokens_budget||0} (${((v.utilization||0)*100).toFixed(0)}%)</div>`).join('')}`}}
+async function editMemory(){const label=document.getElementById('memLabel').value;const action=document.getElementById('memAction').value;const oldStr=document.getElementById('memOld').value;const newStr=document.getElementById('memNew').value;let d;if(action==='replace')d=await post('/memory/replace',{label,old_string:oldStr,new_string:newStr});else if(action==='insert')d=await post('/memory/insert',{label,new_string:newStr,insert_line:-1});else d=await post('/memory/rethink',{label,new_memory:newStr});const res=action==='insert'?'memResult':action;alert(d?.success?'Edit applied!':'Edit failed: '+(d?.error||'unknown'));refreshMemory()}
+async function trackPerson(){const name=document.getElementById('trackName').value;const devices=document.getElementById('trackDevices').value;if(!name||!devices)return;const d=await post('/track/person',{name,devices});document.getElementById('trackResult').textContent=d?.message||JSON.stringify(d)}
+async function trackDecision(){const situation=document.getElementById('decSituation').value;const choice=document.getElementById('decChoice').value;const outcome=document.getElementById('decOutcome').value;const satisfaction=parseInt(document.getElementById('decSatisfaction').value)||5;if(!situation||!choice)return;const d=await post('/track/decision',{situation,choice,outcome,satisfaction});document.getElementById('decResult').textContent=d?.message||JSON.stringify(d)}
+async function learnPattern(){const cause=document.getElementById('patCause').value;const effect=document.getElementById('patEffect').value;if(!cause||!effect)return;const d=await post('/track/pattern',{cause,effect});document.getElementById('patResult').textContent=d?.message||JSON.stringify(d)}
+async function observeEvent(){const type=document.getElementById('obsType').value;let content;try{content=JSON.parse(document.getElementById('obsContent').value)}catch{content={text:document.getElementById('obsContent').value}}if(!type)return;const d=await post('/observe',{activity_type:type,content});document.getElementById('obsResult').textContent=`Observed! Count: ${d?.count||'?'}`}
+async function fetchInsights(){const d=await api('/insights');const el=document.getElementById('insightsList');if(!d||!d.critical?.length){el.innerHTML='<p style="color:var(--text2)">No critical insights right now.</p>';return}el.innerHTML=d.critical.map(i=>`<div class="insight-card ${i.priority||'medium'}"><strong>[${i.ability||''}]</strong> ${esc(i.message)}<br><small>Action: ${esc(i.action||'')}</small></div>`).join('')}
+async function refreshMonitor(){const health=await api('/health');document.getElementById('healthOutput').textContent=JSON.stringify(health,null,2);try{const r=await fetch(API+'/metrics');document.getElementById('metricsOutput').textContent=r.ok?await r.text():'Error fetching metrics'}catch(e){document.getElementById('metricsOutput').textContent='Metrics unavailable'}const snap=await api('/snapshot');document.getElementById('eventBusOutput').textContent=JSON.stringify(snap||{},null,2).slice(0,2000)}
+function init(){initAbilities();refreshStatus();refreshSnapshot();fetchInsights();setInterval(refreshStatus,10000);setInterval(refreshSnapshot,60000);setInterval(fetchInsights,30000)}
+init();
+</script>
+</body>
+</html>

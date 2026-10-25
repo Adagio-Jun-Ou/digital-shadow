@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0a1a">
+<title>Shadow Deploy - Remote Sensor</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a1a;color:#c0c0d0;min-height:100vh;overflow-x:hidden}
+.header{background:linear-gradient(135deg,#1a1a3a,#0d0d2a);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #2a2a4a;position:sticky;top:0;z-index:10}
+.header h1{font-size:18px;color:#6af;font-weight:600}
+.status-dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:6px}
+.status-dot.active{background:#0f6;box-shadow:0 0 8px #0f6}
+.status-dot.idle{background:#fa3;box-shadow:0 0 8px #fa3}
+.status-dot.offline{background:#f33;box-shadow:0 0 8px #f33}
+.badge{font-size:12px;padding:3px 10px;border-radius:12px;font-weight:600}
+.badge-sentry{background:rgba(68,136,255,.2);color:#6af}
+.badge-patrol{background:rgba(0,255,100,.2);color:#0f6}
+.badge-listen{background:rgba(255,200,0,.2);color:#fc0}
+.badge-active{background:rgba(0,255,100,.2);color:#0f6}
+.badge-alerting{background:rgba(255,50,50,.3);color:#f44}
+.badge-idle{background:rgba(255,150,0,.2);color:#fa3}
+.content{padding:12px 16px 100px}
+.card{background:#141428;border:1px solid #2a2a4a;border-radius:12px;padding:14px;margin-bottom:12px}
+.card-title{font-size:14px;color:#889;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat-box{background:#1a1a30;border-radius:8px;padding:10px;text-align:center}
+.stat-val{font-size:24px;font-weight:700;color:#6af}
+.stat-label{font-size:11px;color:#667;margin-top:2px}
+.btn{display:inline-block;padding:10px 20px;border-radius:8px;border:none;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;width:100%}
+.btn-primary{background:linear-gradient(135deg,#36a,#6af);color:#fff}
+.btn-danger{background:linear-gradient(135deg,#a33,#f55);color:#fff}
+.btn-warn{background:linear-gradient(135deg,#a70,#fa0);color:#fff}
+.btn:active{transform:scale(.97)}
+.video-container{position:relative;width:100%;padding-top:56%;background:#000;border-radius:12px;overflow:hidden;margin-bottom:10px}
+.video-container video,.video-container canvas{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover}
+.event-item{background:#1a1a30;border-radius:8px;padding:10px;margin-bottom:6px;border-left:3px solid #3a3a5a}
+.event-item.alert{border-left-color:#f44;background:rgba(255,50,50,.1)}
+.event-item .time{font-size:11px;color:#667}
+.event-item .desc{font-size:13px;color:#bbc;margin-top:3px}
+.config-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0}
+.config-row label{font-size:13px;color:#aab}
+.config-row input[type=range]{width:100px}
+.config-row input[type=number]{width:60px;background:#1a1a30;border:1px solid #3a3a5a;color:#bbc;border-radius:4px;padding:4px 6px;text-align:center}
+.toggle{position:relative;width:44px;height:24px;display:inline-block}
+.toggle input{opacity:0;width:0;height:0}
+.toggle .slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#3a3a5a;border-radius:12px;transition:.3s}
+.toggle .slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
+.toggle input:checked+.slider{background:#6af}
+.toggle input:checked+.slider:before{transform:translateX(20px)}
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:#12122a;border-top:1px solid #2a2a4a;display:flex;padding:8px;gap:6px;z-index:10}
+.bottom-bar .tab{flex:1;text-align:center;padding:8px 4px;border-radius:8px;font-size:11px;color:#667;cursor:pointer;transition:.2s}
+.bottom-bar .tab.active{background:#1a1a3a;color:#6af}
+.sound-bar{width:100%;height:4px;background:#3a3a5a;border-radius:2px;margin-top:4px}
+.sound-bar .fill{height:100%;background:linear-gradient(90deg,#0f6,#fa0,#f33);border-radius:2px;transition:width .3s}
+.toast{position:fixed;top:16px;right:16px;background:#f44;color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;z-index:100;animation:slideIn .3s;max-width:80%}
+@keyframes slideIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
+.hidden{display:none}
+@media(max-width:380px){.stat-val{font-size:20px}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <span id="statusDot" class="status-dot active"></span>
+    <h1 style="display:inline;margin-left:4px">Shadow Sensor</h1>
+  </div>
+  <span id="modeBadge" class="badge badge-sentry">SENTRY</span>
+</div>
+
+<div class="content" id="mainTab">
+  <div class="card">
+    <div class="card-title">Shadow Info</div>
+    <div class="stat-grid">
+      <div class="stat-box"><div class="stat-val" id="shadowName">---</div><div class="stat-label">Name</div></div>
+      <div class="stat-box"><div class="stat-val" id="shadowStatus">provisioning</div><div class="stat-label">Status</div></div>
+      <div class="stat-box"><div class="stat-val" id="reportCount">0</div><div class="stat-label">Reports Sent</div></div>
+      <div class="stat-box"><div class="stat-val" id="alertCount">0</div><div class="stat-label">Alerts</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Device Sensors</div>
+    <div class="stat-grid">
+      <div class="stat-box"><div class="stat-val" id="battPct">---</div><div class="stat-label">Battery %</div></div>
+      <div class="stat-box"><div class="stat-val" id="soundDb">---</div><div class="stat-label">Sound dB</div></div>
+      <div class="stat-box"><div class="stat-val" id="lightLvl">---</div><div class="stat-label">Light</div></div>
+      <div class="stat-box"><div class="stat-val" id="signalStr">---</div><div class="stat-label">Signal</div></div>
+    </div>
+    <div class="sound-bar" style="margin-top:8px"><div class="fill" id="soundBar" style="width:0%"></div></div>
+  </div>
+
+  <div class="card" id="videoCard">
+    <div class="card-title">Camera Feed (every <span id="camInterval">10</span>s)</div>
+    <div class="video-container">
+      <video id="camVideo" autoplay playsinline muted style="display:none"></video>
+      <canvas id="camCanvas"></canvas>
+    </div>
+    <div id="lastObservation" style="font-size:12px;color:#667;margin-top:4px">No observations yet</div>
+  </div>
+</div>
+
+<div class="content hidden" id="eventsTab">
+  <div class="card">
+    <div class="card-title">Recent Events</div>
+    <div id="eventList"></div>
+  </div>
+</div>
+
+<div class="content hidden" id="configTab">
+  <div class="card">
+    <div class="card-title">Shadow Configuration</div>
+    <div class="config-row">
+      <label>Camera Interval</label>
+      <input type="number" id="cfgCameraInterval" value="10" min="1" max="300"> <span style="font-size:11px;color:#667">sec</span>
+    </div>
+    <div class="config-row">
+      <label>Mic Sample</label>
+      <input type="number" id="cfgMicSample" value="5" min="1" max="30"> <span style="font-size:11px;color:#667">sec</span>
+    </div>
+    <div class="config-row">
+      <label>Report Interval</label>
+      <input type="number" id="cfgReportInterval" value="5" min="1" max="60"> <span style="font-size:11px;color:#667">min</span>
+    </div>
+    <div class="config-row">
+      <label>Alert on Faces</label>
+      <label class="toggle"><input type="checkbox" id="cfgFaces" checked><span class="slider"></span></label>
+    </div>
+    <div class="config-row">
+      <label>Alert on Motion</label>
+      <label class="toggle"><input type="checkbox" id="cfgMotion" checked><span class="slider"></span></label>
+    </div>
+    <div class="config-row">
+      <label>Alert on Sound</label>
+      <label class="toggle"><input type="checkbox" id="cfgSound" checked><span class="slider"></span></label>
+    </div>
+  </div>
+  <button class="btn btn-warn" onclick="markIdle()" style="margin-bottom:8px">Mark Idle</button>
+  <button class="btn btn-primary" onclick="testSendReport()" style="margin-bottom:8px">Send Test Report</button>
+  <button class="btn btn-danger" onclick="disconnect()">Disconnect Shadow</button>
+</div>
+
+<div class="bottom-bar">
+  <div class="tab active" onclick="switchTab('main')">Dashboard</div>
+  <div class="tab" onclick="switchTab('events')">Events</div>
+  <div class="tab" onclick="switchTab('config')">Config</div>
+</div>
+
+<script>
+let shadow = {id:'',token:'',name:'',mode:'sentry',status:'active'};
+let baseUrl = 'http://127.0.0.1:8766';
+let reportTimer=null,heartbeatTimer=null,cameraTimer=null;
+let reportInterval=300,cameraInterval=10,micSample=5;
+let lastFrame=null;
+let events=[],reportCount=0,alertCount=0;
+
+function init(){
+  const params=new URLSearchParams(window.location.search);
+  shadow.id=params.get('shadow_id')||localStorage.getItem('sd_id')||'';
+  shadow.token=params.get('auth_token')||localStorage.getItem('sd_token')||'';
+  shadow.name=params.get('name')||localStorage.getItem('sd_name')||'Deployed Shadow';
+  shadow.mode=params.get('mode')||localStorage.getItem('sd_mode')||'sentry';
+  const serverUrl=params.get('server')||localStorage.getItem('sd_server')||baseUrl;
+  if(serverUrl) baseUrl=serverUrl;
+  if(!shadow.id||!shadow.token){
+    showSetupForm();return;
+  }
+  localStorage.setItem('sd_id',shadow.id);
+  localStorage.setItem('sd_token',shadow.token);
+  localStorage.setItem('sd_name',shadow.name);
+  localStorage.setItem('sd_mode',shadow.mode);
+  localStorage.setItem('sd_server',baseUrl);
+  document.getElementById('shadowName').textContent=shadow.name.substring(0,20);
+  document.getElementById('modeBadge').textContent=shadow.mode.toUpperCase();
+  document.getElementById('modeBadge').className='badge badge-'+shadow.mode;
+  startShadow();
+}
+
+function showSetupForm(){
+  document.getElementById('mainTab').innerHTML='<div class="card"><div class="card-title">Shadow Setup</div>'+
+    '<p style="font-size:13px;color:#889;margin-bottom:10px">Enter your shadow credentials from the main ShadowOS dashboard.</p>'+
+    '<input id="setupId" placeholder="Shadow ID" style="width:100%;background:#1a1a30;border:1px solid #3a3a5a;color:#bbc;border-radius:6px;padding:8px;margin-bottom:8px">'+
+    '<input id="setupToken" placeholder="Auth Token" style="width:100%;background:#1a1a30;border:1px solid #3a3a5a;color:#bbc;border-radius:6px;padding:8px;margin-bottom:8px">'+
+    '<input id="setupServer" placeholder="Server URL" value="'+baseUrl+'" style="width:100%;background:#1a1a30;border:1px solid #3a3a5a;color:#bbc;border-radius:6px;padding:8px;margin-bottom:12px">'+
+    '<button class="btn btn-primary" onclick="saveCredentials()">Connect Shadow</button></div>';
+}
+
+function saveCredentials(){
+  shadow.id=document.getElementById('setupId').value.trim();
+  shadow.token=document.getElementById('setupToken').value.trim();
+  const srv=document.getElementById('setupServer').value.trim();
+  if(!shadow.id||!shadow.token){alert('Please enter both Shadow ID and Auth Token');return;}
+  if(srv) baseUrl=srv;
+  localStorage.setItem('sd_id',shadow.id);
+  localStorage.setItem('sd_token',shadow.token);
+  localStorage.setItem('sd_server',baseUrl);
+  location.reload();
+}
+
+function startShadow(){
+  sendHeartbeat();
+  heartbeatTimer=setInterval(sendHeartbeat,30000);
+  startCamera();
+  reportInterval=document.getElementById('cfgReportInterval').value*60*1000;
+  reportTimer=setInterval(sendReport,reportInterval||300000);
+  sendReport();
+}
+
+function sendHeartbeat(){
+  fetch(baseUrl+'/os/deploy/heartbeat',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({shadow_id:shadow.id,auth_token:shadow.token})})
+  .then(r=>r.json()).then(d=>{
+    const dot=document.getElementById('statusDot');
+    dot.className='status-dot active';
+    document.getElementById('shadowStatus').textContent='active';
+    document.getElementById('shadowStatus').style.color='#0f6';
+  }).catch(e=>{
+    const dot=document.getElementById('statusDot');
+    dot.className='status-dot offline';
+    document.getElementById('shadowStatus').textContent='offline';
+    document.getElementById('shadowStatus').style.color='#f44';
+  });
+}
+
+function startCamera(){
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+    document.getElementById('videoCard').innerHTML='<div class="card-title">Camera</div><p style="color:#667">Camera not available on this device</p>';
+    return;
+  }
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:640,height:480}})
+  .then(stream=>{
+    const video=document.getElementById('camVideo');
+    video.srcObject=stream;
+    video.play();
+    video.style.display='block';
+    document.getElementById('camCanvas').style.display='none';
+    cameraInterval=parseInt(document.getElementById('cfgCameraInterval').value)*1000;
+    document.getElementById('camInterval').textContent=document.getElementById('cfgCameraInterval').value;
+    cameraTimer=setInterval(captureFrame,cameraInterval);
+    captureFrame();
+  }).catch(e=>{
+    document.getElementById('videoCard').innerHTML='<div class="card-title">Camera</div><p style="color:#f77">'+e.message+'</p>';
+  });
+}
+
+function captureFrame(){
+  const video=document.getElementById('camVideo');
+  if(!video||video.readyState<2)return;
+  const canvas=document.getElementById('camCanvas');
+  canvas.width=video.videoWidth||640;
+  canvas.height=video.videoHeight||480;
+  const ctx=canvas.getContext('2d');
+  ctx.drawImage(video,0,0,canvas.width,canvas.height);
+  const dataUrl=canvas.toDataURL('image/jpeg',0.5);
+  lastFrame=dataUrl;
+  document.getElementById('lastObservation').textContent='Frame captured '+new Date().toLocaleTimeString();
+}
+
+function sendReport(){
+  if(!shadow.id||!shadow.token)return;
+  const report={
+    shadow_id:shadow.id,
+    auth_token:shadow.token,
+    visual_observation:lastFrame?"Scene captured at "+new Date().toLocaleString():"No camera data",
+    scene_category:"unknown",
+    faces_detected:0,
+    motion_detected:false,
+    sound_level_db:0,
+    light_level:0.5,
+    battery_pct:100,
+    signal_strength:1.0,
+  };
+  try{batteryPct();}catch(e){}
+  fetch(baseUrl+'/os/deploy/report',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(report)})
+  .then(r=>r.json()).then(d=>{
+    reportCount++;
+    document.getElementById('reportCount').textContent=reportCount;
+    if(d.alert){
+      alertCount++;
+      document.getElementById('alertCount').textContent=alertCount;
+      addEvent('ALERT','Alert triggered on main server',true);
+    }else{
+      addEvent('REPORT','Report sent successfully',false);
+    }
+    if(d.report_id){
+      shadow.lastReport=d.report_id;
+    }
+  }).catch(e=>{
+    addEvent('ERROR','Failed to send report: '+e.message,true);
+  });
+}
+
+function batteryPct(){
+  if(navigator.getBattery){
+    navigator.getBattery().then(b=>{document.getElementById('battPct').textContent=Math.round(b.level*100)+'%';});
+  }
+}
+
+function addEvent(type,desc,isAlert){
+  const t=new Date().toLocaleTimeString();
+  events.unshift({time:t,type,desc,alert:isAlert});
+  if(events.length>50)events.pop();
+  renderEvents();
+  if(isAlert){
+    const toast=document.createElement('div');
+    toast.className='toast';
+    toast.textContent=type+': '+desc.substring(0,100);
+    document.body.appendChild(toast);
+    setTimeout(()=>toast.remove(),4000);
+  }
+}
+function renderEvents(){
+  const el=document.getElementById('eventList');
+  if(!el)return;
+  el.innerHTML=events.slice(0,30).map(e=>
+    '<div class="event-item'+(e.alert?' alert':'')+'">'+
+    '<div class="time">'+e.time+' - '+e.type+'</div>'+
+    '<div class="desc">'+e.desc.substring(0,200)+'</div></div>'
+  ).join('');
+}
+
+function switchTab(tab){
+  document.querySelectorAll('.content').forEach(e=>e.classList.add('hidden'));
+  document.querySelectorAll('.tab').forEach(e=>e.classList.remove('active'));
+  if(tab==='main'){document.getElementById('mainTab').classList.remove('hidden');document.querySelector('.tab:nth-child(1)').classList.add('active');}
+  else if(tab==='events'){document.getElementById('eventsTab').classList.remove('hidden');document.querySelector('.tab:nth-child(2)').classList.add('active');renderEvents();}
+  else{document.getElementById('configTab').classList.remove('hidden');document.querySelector('.tab:nth-child(3)').classList.add('active');}
+}
+
+function markIdle(){
+  fetch(baseUrl+'/os/deploy/idle',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({shadow_id:shadow.id,auth_token:shadow.token})})
+  .then(r=>r.json()).then(d=>{
+    document.getElementById('shadowStatus').textContent='idle';
+    document.getElementById('shadowStatus').style.color='#fa3';
+    addEvent('STATUS','Shadow marked idle',false);
+  });
+}
+
+function testSendReport(){
+  shadow.visual_observation='Test observation at '+new Date().toLocaleString();
+  sendReport();
+}
+
+function disconnect(){
+  if(confirm('Disconnect this shadow sensor?')){
+    clearInterval(heartbeatTimer);clearInterval(reportTimer);clearInterval(cameraTimer);
+    document.getElementById('statusDot').className='status-dot offline';
+    document.getElementById('shadowStatus').textContent='disconnected';
+    document.getElementById('shadowStatus').style.color='#f44';
+    addEvent('STATUS','Shadow disconnected',true);
+  }
+}
+
+document.addEventListener('DOMContentLoaded',init);
+</script>
+</body>
+</html>

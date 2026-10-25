@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ShadowOS v3 — Cognitive Dashboard</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg:#06060c;--surface:#0e0e18;--surface2:#161624;--surface3:#1e1e30;
+--border:#2a2a40;--border2:#363650;
+--text:#eaeaf0;--text2:#8888a8;--text3:#555570;
+--accent:#7c5cff;--accent-dim:rgba(124,92,255,.1);
+--green:#00dc82;--green-dim:rgba(0,220,130,.1);
+--red:#ff4d6a;--red-dim:rgba(255,77,106,.1);
+--orange:#ffb84d;--orange-dim:rgba(255,184,77,.1);
+--blue:#4dc9f6;--blue-dim:rgba(77,201,246,.1);
+--pink:#ff6b9d;
+--r:10px;--rs:6px;--rr:16px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro','Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.5;min-height:100vh}
+
+/* ═══ HEADER ═══ */
+header{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;backdrop-filter:blur(20px)}
+header h1{font-size:18px;font-weight:800;letter-spacing:-.3px;background:linear-gradient(135deg,var(--accent),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hdr-r{display:flex;align-items:center;gap:12px;font-size:12px;color:var(--text3)}
+.hdr-dot{width:8px;height:8px;border-radius:50%;background:var(--text3);transition:all .3s}
+.hdr-dot.on{background:var(--green);box-shadow:0 0 8px var(--green)}
+.hdr-dot.off{background:var(--red)}
+.refresh-spin{animation:spin 1s linear infinite;display:none}
+.refresh-spin.on{display:inline-block}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+
+/* ═══ NAV ═══ */
+nav{display:flex;gap:2px;padding:6px 16px 0;background:var(--surface);border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{background:transparent;border:none;color:var(--text3);padding:8px 12px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .15s;text-transform:uppercase;letter-spacing:.5px}
+nav button:hover{color:var(--text2)}
+nav button.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+/* ═══ LAYOUT ═══ */
+.container{max-width:1600px;margin:0 auto;padding:16px 20px}
+.tab{display:none}
+.tab.on{display:block}
+
+/* ═══ STATS ROW ═══ */
+.srow{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.sbox{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:10px 14px;min-width:100px;flex:1}
+.sbox .l{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px}
+.sbox .v{font-size:20px;font-weight:800;margin-top:2px}
+.sbox .sub{font-size:9px;color:var(--text2);margin-top:1px}
+.sbox.g .v{color:var(--green)}.sbox.r .v{color:var(--red)}.sbox.a .v{color:var(--accent)}.sbox.b .v{color:var(--blue)}.sbox.o .v{color:var(--orange)}
+
+/* ═══ CARDS ═══ */
+.grid{display:grid;gap:12px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;transition:border-color .15s}
+.card:hover{border-color:var(--accent)}
+.card h3{font-size:11px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+.card p{font-size:12px;color:var(--text2);line-height:1.5}
+
+/* ═══ MODULE HEALTH BARS ═══ */
+.mlist{max-height:400px;overflow-y:auto}
+.mrow{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)}
+.mrow:last-child{border-bottom:none}
+.mnm{font-size:11px;color:var(--text);min-width:100px}
+.mbar{flex:1;max-width:80px;height:4px;background:var(--surface2);border-radius:2px;margin:0 8px;overflow:hidden}
+.mbar .f{height:100%;border-radius:2px;transition:width .3s}
+.mbar .f.h{background:var(--green)}.mbar .f.d{background:var(--orange)}.mbar .f.o{background:var(--red)}
+.mst{font-size:9px;padding:1px 6px;border-radius:4px;font-weight:700}
+.mst.healthy{background:var(--green-dim);color:var(--green)}
+.mst.degraded{background:var(--orange-dim);color:var(--orange)}
+.mst.offline{background:var(--red-dim);color:var(--red)}
+
+/* ═══ HEALTH DATA ═══ */
+.hgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.hbox{background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:8px;text-align:center}
+.hbox .v{font-size:20px;font-weight:800;line-height:1}
+.hbox .l{font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;margin-top:2px}
+.hbox.g .v{color:var(--green)}.hbox.r .v{color:var(--red)}.hbox.b .v{color:var(--blue)}.hbox.o .v{color:var(--orange)}.hbox.a .v{color:var(--accent)}
+
+/* ═══ RADAR ═══ */
+.radar{display:grid;grid-template-columns:1fr 1fr;gap:3px;max-width:280px;margin:8px auto}
+.rl{font-size:10px;color:var(--text2);text-align:right;padding-right:6px;line-height:16px}
+.rb{height:16px;background:var(--surface2);border-radius:3px;overflow:hidden}
+.rb .f{height:100%;border-radius:3px;transition:width .3s;background:linear-gradient(90deg,var(--accent),var(--green))}
+
+/* ═══ AGENTS ═══ */
+.agt{background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:10px;margin-bottom:6px}
+.agt .ah{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.agt .an{font-size:13px;font-weight:700;color:var(--text)}
+.agt .as{font-size:9px;padding:2px 6px;border-radius:8px;font-weight:700}
+.agt .as.arise{background:var(--green-dim);color:var(--green)}
+.agt .as.configure{background:var(--blue-dim);color:var(--blue)}
+.agt .as.active{background:var(--accent-dim);color:var(--accent)}
+.agt .as.complete{background:var(--orange-dim);color:var(--orange)}
+.agt .as.archived{background:rgba(85,85,112,.1);color:var(--text3)}
+.agt .ao{font-size:11px;color:var(--text2)}
+
+/* ═══ LOG ═══ */
+.log{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:10px;padding:3px 6px;border-bottom:1px solid var(--border)}
+.log .ts{color:var(--text3)}.log .act{color:var(--accent)}.log .den{color:var(--red)}
+
+/* ═══ INPUTS ═══ */
+input,textarea,select{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:var(--rs);font-size:12px;width:100%;outline:none;transition:border .15s}
+input:focus,textarea:focus{border-color:var(--accent)}
+.btn{background:var(--accent);color:#fff;border:none;padding:8px 14px;border-radius:var(--rs);font-size:11px;font-weight:700;cursor:pointer;transition:all .15s}
+.btn:hover{opacity:.9}.btn.dn{background:var(--red)}
+
+/* ═══ SCROLLBAR ═══ */
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+</style>
+</head>
+<body>
+<header>
+<h1>ShadowOS v3</h1>
+<div class="hdr-r">
+<span class="hdr-dot" id="hdrDot"></span>
+<span id="hdrStatus">—</span>
+<span id="hdrUp">0s</span>
+<span class="refresh-spin" id="refreshIcon">&#x21bb;</span>
+</div>
+</header>
+
+<nav id="nav">
+<button class="active" data-t="overview" onclick="tab('overview')">Overview</button>
+<button data-t="modules" onclick="tab('modules')">Modules</button>
+<button data-t="device" onclick="tab('device')">Device</button>
+<button data-t="health" onclick="tab('health')">Health</button>
+<button data-t="personality" onclick="tab('personality')">Personality</button>
+<button data-t="memory" onclick="tab('memory')">Memory</button>
+<button data-t="agents" onclick="tab('agents')">Agents</button>
+<button data-t="briefing" onclick="tab('briefing')">Briefing</button>
+<button data-t="stealth" onclick="tab('stealth')">Stealth</button>
+<button data-t="mesh" onclick="tab('mesh')">Mesh</button>
+<button data-t="voice" onclick="tab('voice')">Voice</button>
+</nav>
+
+<div class="container">
+<!-- ═══ OVERVIEW ═══ -->
+<div id="overview-tab" class="tab on">
+<div class="srow" id="ovStats"></div>
+<div class="grid g2">
+<div class="card"><h3>Cognitive State</h3><div id="ovCog" style="font-size:16px;font-weight:700"></div></div>
+<div class="card"><h3>Device Context</h3><div id="ovDev"><p>—</p></div></div>
+<div class="card"><h3>Personality</h3><div id="ovPers"><p>—</p></div></div>
+<div class="card"><h3>Memory</h3><div id="ovMem"><p>—</p></div></div>
+<div class="card"><h3>Crew</h3><div id="ovCrew"><p>—</p></div></div>
+<div class="card"><h3>Stealth</h3><div id="ovStealth"><p>—</p></div></div>
+</div>
+</div>
+
+<!-- ═══ MODULES ═══ -->
+<div id="modules-tab" class="tab">
+<div class="srow" id="modSummary"></div>
+<div class="grid g2">
+<div class="card"><h3>Module Health</h3><div class="mlist" id="modList"></div></div>
+<div class="card"><h3>Health Dashboard</h3><div id="healthDash"><p>—</p></div></div>
+</div>
+</div>
+
+<!-- ═══ DEVICE ═══ -->
+<div id="device-tab" class="tab">
+<div class="hgrid" id="devGrid"></div>
+<div class="grid g2" style="margin-top:12px">
+<div class="card"><h3>Connected Devices</h3><div id="devDevices"><p>—</p></div></div>
+<div class="card"><h3>Digital Wellbeing</h3><div id="devWell"><p>—</p></div></div>
+</div>
+</div>
+
+<!-- ═══ HEALTH ═══ -->
+<div id="health-tab" class="tab">
+<div class="hgrid" id="hGrid"></div>
+<div class="grid g2" style="margin-top:12px">
+<div class="card"><h3>Health Trends</h3><div id="hTrends"><p>—</p></div></div>
+<div class="card"><h3>Sleep & Recovery</h3><div id="hSleep"><p>—</p></div></div>
+</div>
+</div>
+
+<!-- ═══ PERSONALITY ═══ -->
+<div id="personality-tab" class="tab">
+<div class="grid g2">
+<div class="card"><h3>Big Five</h3><div id="bfChart" class="radar"></div></div>
+<div class="card"><h3>Behavioral Style</h3><div id="bfStyle"><p>—</p></div></div>
+<div class="card"><h3>Detected Patterns</h3><div id="bfPatterns" style="max-height:300px;overflow-y:auto"></div></div>
+<div class="card"><h3>Decision Prediction</h3>
+<textarea id="predOpts" rows="3" placeholder='[{"name":"A","reward":0.7,"risk_level":0.3}]'></textarea>
+<button class="btn" onclick="predictDecision()" style="margin-top:6px">Predict</button>
+<div id="predResult" style="margin-top:6px;font-size:11px"></div>
+</div>
+</div>
+</div>
+
+<!-- ═══ MEMORY ═══ -->
+<div id="memory-tab" class="tab">
+<div class="srow" id="memStats"></div>
+<div class="grid g2">
+<div class="card"><h3>Search</h3>
+<input id="memQ" placeholder="Search memories...">
+<button class="btn" onclick="searchMem()" style="margin-top:6px">Search</button>
+<div id="memResults" style="margin-top:8px;font-size:11px"></div>
+</div>
+<div class="card"><h3>Knowledge Graph</h3>
+<input id="kgEid" placeholder="Entity ID">
+<button class="btn" onclick="queryKG()" style="margin-top:6px">Query</button>
+<div id="kgRes" style="margin-top:8px;font-size:11px"></div>
+</div>
+</div>
+<div class="card" style="margin-top:12px"><h3>Memory Blocks</h3><div id="memBlocks"></div></div>
+</div>
+
+<!-- ═══ AGENTS ═══ -->
+<div id="agents-tab" class="tab">
+<div class="grid g2">
+<div class="card"><h3>ShadowCrew</h3><div id="crewAgents"></div></div>
+<div class="card"><h3>ShadowArise</h3><div id="ariseAgents"></div></div>
+</div>
+<div class="card" style="margin-top:12px"><h3>Mission Control</h3>
+<input id="missionObj" placeholder="Mission objective...">
+<button class="btn" onclick="createMission()" style="margin-top:6px">Launch</button>
+<div id="missionRes" style="margin-top:6px;font-size:11px"></div>
+</div>
+</div>
+
+<!-- ═══ BRIEFING ═══ -->
+<div id="briefing-tab" class="tab">
+<div class="card"><h3>Daily Briefing</h3>
+<button class="btn" onclick="genBriefing()" style="margin:6px 0">Generate</button>
+<div id="briefingContent"></div>
+</div>
+</div>
+
+<!-- ═══ STEALTH ═══ -->
+<div id="stealth-tab" class="tab">
+<div class="grid g2">
+<div class="card"><h3>Privacy Stats</h3><div id="privStats"><p>—</p></div></div>
+<div class="card"><h3>Access Audit</h3><div id="auditLog" style="max-height:400px;overflow-y:auto"></div></div>
+</div>
+</div>
+
+<!-- ═══ MESH ═══ -->
+<div id="mesh-tab" class="tab">
+<div class="srow" id="meshSrow"></div>
+<div style="display:flex;gap:20px;flex-wrap:wrap;padding:16px;justify-content:center" id="meshVis"></div>
+</div>
+
+<!-- ═══ VOICE ═══ -->
+<div id="voice-tab" class="tab">
+<div class="grid g2">
+<div class="card"><h3>Voice Status</h3><div id="vStatus"><p>—</p></div></div>
+<div class="card"><h3>Voice Command</h3>
+<input id="vInput" placeholder="Type voice command...">
+<button class="btn" onclick="processVoice()" style="margin-top:6px">Process</button>
+<div id="vResult" style="margin-top:6px;font-size:11px"></div>
+</div>
+</div>
+</div>
+</div>
+
+<script>
+const API=window.location.origin+'/os';
+let curTab='overview';
+ let refreshT=null,apiFailCount=0;
+ 
+ function api(p,o={}){
+ const icon=document.getElementById('refreshIcon');if(icon)icon.classList.add('on');
+ return fetch(API+p,{headers:{'Content-Type':'application/json'},...o}).then(r=>{if(!r.ok)throw new Error(r.status);apiFailCount=0;return r.json()}).catch(e=>{console.warn('API:',e);apiFailCount++;showOffline();return null}).finally(()=>{if(icon)icon.classList.remove('on')})
+ }
+ 
+ let offlineTimer=null;
+ function showOffline(){
+ document.getElementById('hdrDot').className='hdr-dot off';
+ document.getElementById('hdrStatus').textContent='offline';
+ let b=document.getElementById('offlineBanner');
+ if(!b){b=document.createElement('div');b.id='offlineBanner';b.className='mst offline';b.style.cssText='position:fixed;bottom:0;left:0;right:0;text-align:center;padding:6px;font-size:11px;z-index:200';b.textContent='Connection lost — retrying...';document.body.appendChild(b)}
+ clearTimeout(offlineTimer);
+ offlineTimer=setTimeout(()=>{document.getElementById('hdrDot').className='hdr-dot';document.getElementById('hdrStatus').textContent='—';if(b)b.remove()},5000);
+ }
+
+function tab(n){
+curTab=n;
+document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+const tb=document.getElementById(n+'-tab');if(tb)tb.classList.add('on');
+const bt=document.querySelector(`nav button[data-t="${n}"]`);if(bt)bt.classList.add('active');
+refreshTab();
+}
+
+function fmtDur(s){const h=Math.floor(s/3600);const m=Math.floor((s%3600)/60);return h>0?h+'h '+m+'m':m+'m'}
+function sbox(v,l,cls,sub=''){return`<div class="sbox ${cls}"><div class="l">${l}</div><div class="v">${v}</div>${sub?'<div class="sub">'+sub+'</div>':''}</div>`}
+function hbox(v,l,cls){return`<div class="hbox ${cls}"><div class="v">${v}</div><div class="l">${l}</div></div>`}
+
+function refreshTab(){
+const r={overview:refOverview,modules:refModules,device:refDevice,health:refHealth,personality:refPersonality,memory:refMemory,agents:refAgents,briefing:refBriefing,stealth:refStealth,mesh:refMesh,voice:refVoice};
+if(r[curTab])r[curTab]();
+}
+
+async function refOverview(){
+const[s,h]=await Promise.all([api('/status'),api('/health')]);
+if(!s){document.getElementById('ovStats').innerHTML=sbox('—','Connection Error','r');return}
+document.getElementById('hdrDot').className='hdr-dot '+(h&&h.status==='healthy'?'on':'off');
+document.getElementById('hdrStatus').textContent=h?h.status:'—';
+document.getElementById('hdrUp').textContent=s.uptime_seconds?fmtDur(s.uptime_seconds):'—';
+
+const st=s.stats||{};
+document.getElementById('ovStats').innerHTML=
+sbox(st.events_processed||0,'Events','a')+
+sbox(st.queries_handled||0,'Queries','a')+
+sbox(st.insights_generated||0,'Insights','g')+
+sbox(st.anomalies_detected||0,'Anomalies','b')+
+sbox(st.errors||0,'Errors',st.errors>0?'r':'g')+
+sbox(h?h.module_count:'?','Modules','a');
+
+const gs=s.graph_status||{};
+document.getElementById('ovCog').innerHTML=`
+<div style="font-size:22px;font-weight:800;color:var(--accent)">${gs.current_mode||'unknown'}</div>
+<p style="color:var(--text2);font-size:11px">Confidence: ${((gs.confidence||0)*100).toFixed(0)}% | Urgency: ${((gs.urgency||0)*100).toFixed(0)}%</p>`;
+
+const dc=s.device_context_stats||{};
+document.getElementById('ovDev').innerHTML=`
+<p>iPhone: <b style="color:var(--accent)">${dc.iphones_connected||0}</b> | Watch: <b style="color:var(--blue)">${dc.watches_connected||0}</b> | Laptop: <b>${dc.laptops_connected||0}</b></p>`;
+
+const ps=s.personality_stats||{};
+document.getElementById('ovPers').innerHTML=`
+<p>Decision: <b style="color:var(--accent)">${ps.decision_style||'?'}</b> | Comm: <b>${ps.communication_style||'?'}</b></p>
+<p>Patterns: <b>${ps.patterns_discovered||0}</b></p>`;
+
+const ms=s.memory_stats||{};
+document.getElementById('ovMem').innerHTML=`
+<div style="font-size:20px;font-weight:800">${ms.total_atoms||0}</div>
+<p>atoms | ${ms.vector_index_size||0} indexed | ${(ms.kg_stats||{}).entities||0} entities</p>`;
+
+const cs=s.crew_stats||{};
+document.getElementById('ovCrew').innerHTML=`
+<div style="font-size:20px;font-weight:800">${cs.agents_count||0}</div>
+<p>agents | ${cs.missions_count||0} missions</p>`;
+
+document.getElementById('ovStealth').innerHTML=`<p>Queries: <b>${st.queries_handled||0}</b> | Events: <b>${st.events_processed||0}</b></p>`;
+}
+
+async function refModules(){
+const h=await api('/health');if(!h)return;
+const mods=h.modules||{};
+let hc=0,dc=0,oc=0;
+const rows=Object.entries(mods).map(([k,v])=>{
+const st=v.status||'unknown';
+if(st==='healthy')hc++;else if(st==='degraded')dc++;else oc++;
+const pct=st==='healthy'?100:st==='degraded'?60:0;
+const cls=st==='healthy'?'h':st==='degraded'?'d':'o';
+return`<div class="mrow"><span class="mnm">${k}</span><div class="mbar"><div class="f ${cls}" style="width:${pct}%"></div></div><span class="mst ${st}">${st}</span></div>`;
+}).join('');
+document.getElementById('modList').innerHTML=rows||'<p>—</p>';
+document.getElementById('modSummary').innerHTML=
+sbox(hc,'Healthy','g')+sbox(dc,'Degraded','o')+sbox(oc,'Offline','r')+sbox(h.module_count||'?','Total','a');
+document.getElementById('healthDash').innerHTML=`<p>Overall: <b style="color:${oc===0?'var(--green)':'var(--orange)'}">${h.status}</b></p><p style="color:var(--text2);font-size:11px">${hc+dc+oc} modules monitored</p>`;
+}
+
+async function refDevice(){
+const ctx=await api('/device/context');
+if(!ctx||ctx.status==='no_data_yet'){document.getElementById('devGrid').innerHTML=hbox('—','No Data','');document.getElementById('devDevices').innerHTML='<p>—</p>';document.getElementById('devWell').innerHTML='<p>—</p>';return}
+const h=ctx.health||{};const d=ctx.digital||{};const e=ctx.environment||{};const hData=ctx.health||{};
+let o='';
+o+=hbox(h.heart_rate||'—','Heart',h.heart_rate>100?'r':'g');
+o+=hbox(h.hrv?h.hrv.toFixed(0):'—','HRV','b');
+o+=hbox(h.spo2?h.spo2.toFixed(0):'—','SpO2',h.spo2<95?'r':'g');
+o+=hbox(h.step_count||0,'Steps','a');
+o+=hbox(h.sleep_minutes_last_24h?Math.round(h.sleep_minutes_last_24h/60)+'h':'—','Sleep','b');
+o+=hbox(h.stress_level||'—','Stress',h.stress_level==='critical'?'r':h.stress_level==='high'?'o':'g');
+o+=hbox(e.battery_level!=null?e.battery_level+'%':'—','Batt',e.battery_level<20?'r':'g');
+o+=hbox(d.active_app?d.active_app.substring(0,16):'—','App','');
+document.getElementById('devGrid').innerHTML=o;
+
+const dev=await api('/device/summary');if(dev){
+const dl=(dev.devices||[]).map(d=>`<p>${d.type}: <b>${d.name||d.device_id}</b> ${d.stale?'<span style="color:var(--orange)">stale</span>':'<span style="color:var(--green)">online</span>'}</p>`).join('');
+document.getElementById('devDevices').innerHTML=dl||'<p>No devices</p>'}
+
+const wb=await api('/device/digital-wellbeing');if(wb){
+document.getElementById('devWell').innerHTML=`<p>Screen: <b>${wb.screen_time_minutes||0}min</b> | Notifs: <b>${wb.total_notifications||0}</b></p><p>Distraction: <b style="color:${(wb.distraction_score||0)>0.7?'var(--red)':'var(--green)'}">${((wb.distraction_score||0)*100).toFixed(0)}%</b> | Focus: <b>${wb.focus_quality||'—'}</b></p>`}
+}
+
+async function refHealth(){
+const ht=await api('/device/health-trends');const ctx=await api('/device/context');if(!ht&&!ctx)return;
+const h=ctx?ctx.health:{}:{};const sl=h.stress_level||'low';
+let o='';
+o+=hbox(h.heart_rate||'—','Heart',h.heart_rate>100?'r':'g');
+o+=hbox(h.hrv?h.hrv.toFixed(0):'—','HRV','b');
+o+=hbox(h.spo2?h.spo2.toFixed(0):'—','SpO2',h.spo2<95?'r':'g');
+o+=hbox(h.exercise_minutes||0,'Exercise','a');
+o+=hbox(h.step_count||0,'Steps','g');
+o+=hbox(sl.charAt(0).toUpperCase()+sl.slice(1),'Stress',sl==='critical'?'r':sl==='high'?'o':'g');
+document.getElementById('hGrid').innerHTML=o;
+
+if(ht&&ht.avg_heart_rate){
+document.getElementById('hTrends').innerHTML=`
+<p>Avg HR: <b>${ht.avg_heart_rate||0}</b> | Avg HRV: <b>${ht.avg_hrv||0}</b></p>
+<p>Min SpO2: <b>${ht.min_spo2||'—'}</b> | Trend: <b style="color:var(--${ht.trend==='elevated'?'orange':'green'})">${ht.trend||'—'}</b></p>
+<p>Data points: ${ht.data_points||0}</p>`}
+
+const sh=h.sleep_minutes_last_24h||0;
+document.getElementById('hSleep').innerHTML=`
+<p>Sleep: <b style="color:var(--blue)">${sh?Math.round(sh/60)+'h '+sh%60+'m':'—'}</b></p>
+<p>Resting HR: <b>${h.heart_rate_resting||'—'}</b> | Phase: <b>${h.sleep_phase||'—'}</b></p>`
+}
+
+async function refPersonality(){
+const[prof,patt]=await Promise.all([api('/personality'),api('/personality/patterns')]);
+if(!prof)return;
+const bf=prof.big_five||{};
+const dims=[{k:'openness',l:'Openness',v:bf.openness},{k:'conscientiousness',l:'Conscientiousness',v:bf.conscientiousness},{k:'extraversion',l:'Extraversion',v:bf.extraversion},{k:'agreeableness',l:'Agreeableness',v:bf.agreeableness},{k:'neuroticism',l:'Neuroticism',v:bf.neuroticism}];
+document.getElementById('bfChart').innerHTML=dims.map(d=>`<div class="rl">${d.l}</div><div class="rb"><div class="f" style="width:${(d.v||0.5)*100}%"></div></div>`).join('');
+document.getElementById('bfStyle').innerHTML=`
+<p>Decision: <b style="color:var(--accent)">${prof.decision_style||'?'}</b></p>
+<p>Communication: <b style="color:var(--green)">${prof.communication_style||'?'}</b></p>
+<p>Values: ${(prof.value_priorities||[]).join(', ')||'—'}</p>
+<p style="color:var(--text3)">Evidence: ${bf.evidence_count||0}</p>`;
+
+const ph=(patt?.patterns||[]).slice(0,10).map(p=>`<div style="padding:4px;border-left:2px solid var(--accent);margin-bottom:4px"><b>${p.name}</b> <span style="color:var(--text3);font-size:10px">${((p.confidence||0)*100).toFixed(0)}%</span><br><span style="font-size:11px;color:var(--text2)">${p.description||''}</span></div>`).join('');
+document.getElementById('bfPatterns').innerHTML=ph||'<p style="color:var(--text3)">No patterns</p>';
+}
+
+async function predictDecision(){
+const opts=document.getElementById('predOpts').value;try{
+const o=JSON.parse(opts);const r=await api('/personality/predict',{method:'POST',body:JSON.stringify({options:o})});
+document.getElementById('predResult').innerHTML=`<span style="color:var(--accent)">Option ${r.predicted_choice}</span> (${((r.confidence||0)*100).toFixed(0)}%)`}catch{document.getElementById('predResult').innerHTML='<span style="color:var(--red)">Invalid JSON</span>'}
+}
+
+async function refMemory(){
+const[stats,blocks]=await Promise.all([api('/memory/stats'),api('/memory/blocks')]);if(!stats)return;
+document.getElementById('memStats').innerHTML=
+sbox(stats.total_atoms||0,'Atoms','a')+sbox(stats.vector_index_size||0,'Indexed','b')+sbox((stats.kg_stats||{}).entities||0,'Entities','g')+sbox((stats.kg_stats||{}).relations||0,'Relations','b');
+const bh=(blocks?.blocks||[]).slice(0,8).map(b=>`<div style="padding:6px;border-bottom:1px solid var(--border)"><b style="color:var(--accent)">${b.label}</b> <span style="color:var(--text3);font-size:10px">${b.length||0}/${b.limit||2000} ${b.protected?'🔒':''}</span></div>`).join('');
+document.getElementById('memBlocks').innerHTML=bh||'<p style="color:var(--text3)">No blocks</p>';
+}
+
+async function searchMem(){
+const q=document.getElementById('memQ').value;const r=await api('/memory/search',{method:'POST',body:JSON.stringify({query:q,limit:10})});
+const h=(r?.results||[]).map(x=>`<div style="padding:4px;border-bottom:1px solid var(--border)"><b>${x.atom_type}</b> <span style="color:var(--text3)">${x.domain||''}</span><br><span style="font-size:11px">${(x.content||'').substring(0,150)}</span></div>`).join('');
+document.getElementById('memResults').innerHTML=h||'<p style="color:var(--text3)">No results</p>';
+}
+
+async function queryKG(){
+const eid=document.getElementById('kgEid').value;const r=await api('/kg/query',{method:'POST',body:JSON.stringify({entity_id:eid,depth:1})});
+document.getElementById('kgRes').innerHTML=`<pre style="font-size:10px;color:var(--text2)">${JSON.stringify(r,null,2).substring(0,500)}</pre>`;
+}
+
+async function refAgents(){
+const[crew,arise]=await Promise.all([api('/crew/agents'),api('/arise/list?limit=20')]);
+if(crew){const h=(crew.agents||[]).map(a=>`<div class="agt"><div class="ah"><span class="an">${a.name}</span></div><div class="ao" style="font-size:11px">${a.role||''} — ${(a.capabilities||[]).join(', ')||'none'}</div></div>`).join('');
+document.getElementById('crewAgents').innerHTML=h||'<p style="color:var(--text3)">No crew</p>'}
+if(arise){const a=(arise.agents||[]).map(x=>{const st=x.lifecycle_stage||x.status||'arise';return`<div class="agt"><div class="ah"><span class="an">${x.name||x.agent_id}</span><span class="as ${st}">${st}</span></div><div class="ao">${x.objective||''}</div></div>`}).join('');
+document.getElementById('ariseAgents').innerHTML=a||'<p style="color:var(--text3)">No agents</p>'}
+}
+
+async function createMission(){
+const obj=document.getElementById('missionObj').value;if(!obj)return;
+const m=await api('/crew/mission',{method:'POST',body:JSON.stringify({objective:obj})});
+if(m?.mission_id){const r=await api('/crew/mission/'+m.mission_id+'/execute',{method:'POST'});
+document.getElementById('missionRes').innerHTML=`<span style="color:var(--green)">${r?.status||'done'}</span>`}
+}
+
+async function genBriefing(){
+document.getElementById('briefingContent').innerHTML='<p style="color:var(--text3)">Generating...</p>';
+const b=await api('/briefing/generate',{method:'POST'});
+const h=Object.entries(b?.sections||{}).map(([sec,items])=>items.map(i=>`<div style="padding:6px;margin-bottom:4px;border-left:3px solid var(--${i.urgency==='critical'?'red':i.urgency==='high'?'orange':i.urgency==='medium'?'blue':'green'});background:var(--surface2);border-radius:0 var(--rs) var(--rs) 0"><b>${i.title}</b><br><span style="font-size:11px;color:var(--text2)">${i.content}</span></div>`).join('')).join('');
+document.getElementById('briefingContent').innerHTML=h||'<p style="color:var(--text3)">No items</p>';
+}
+
+async function refStealth(){
+const[s,a]=await Promise.all([api('/stealth/stats'),api('/stealth/audit?limit=20')]);if(!s)return;
+const ss=s.stealth_stats||{};
+document.getElementById('privStats').innerHTML=`
+<p>Checks: <b>${ss.access_checks||0}</b> | Granted: <b style="color:var(--green)">${ss.access_granted||0}</b> | Denied: <b style="color:var(--red)">${ss.access_denied||0}</b></p>`;
+const ah=(a?.audit_log||[]).slice(0,20).map(e=>`<div class="log"><span class="ts">${(e.timestamp||'').substring(11,19)}</span> <span class="${e.granted?'act':'den'}">${e.subject}</span> → ${e.action} ${e.data_id||''} <span style="color:${e.granted?'var(--green)':'var(--red)'}">${e.granted?'GRANTED':'DENIED'}</span></div>`).join('');
+document.getElementById('auditLog').innerHTML=ah||'<p style="color:var(--text3)">No entries</p>';
+}
+
+async function refMesh(){
+const[s,p]=await Promise.all([api('/mesh/status'),api('/mesh/peers')]);if(!s)return;
+document.getElementById('meshSrow').innerHTML=
+sbox(s.local_node?.name||'?','Local','a')+sbox(s.peers_count||0,'Peers','g')+sbox((s.gossip_stats||{}).seen_messages||0,'Gossip','b');
+const local=s.local_node||{};let h=`<div style="width:80px;height:80px;border-radius:50%;border:2px dashed var(--accent);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;background:var(--surface2)"><b>${local.name||'Local'}</b><span style="font-size:9px;color:var(--text3)">${local.device_type||'server'}</span></div>`;
+(p?.peers||[]).forEach(x=>{h+=`<div style="color:var(--text3);font-size:11px;align-self:center">↔</div><div style="width:80px;height:80px;border-radius:50%;border:2px solid var(--green);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;background:var(--surface2)"><b>${x.name||x.node_id}</b><span style="font-size:9px;color:var(--text3)">${x.device_type||'?'}</span></div>`});
+document.getElementById('meshVis').innerHTML=h;
+}
+
+async function refVoice(){
+const s=await api('/voice/status');if(!s)return;
+document.getElementById('vStatus').innerHTML=`
+<p>State: <b style="color:${s.state==='idle'?'var(--text3)':'var(--accent)'}">${s.state||'unknown'}</b></p>
+<p>Sessions: ${s.stats?.sessions_total||0} | Commands: ${s.stats?.commands_processed||0}</p>`;
+}
+
+async function processVoice(){
+const t=document.getElementById('vInput').value;if(!t)return;
+const r=await api('/voice/process',{method:'POST',body:JSON.stringify({transcript:t})});
+document.getElementById('vResult').innerHTML=`<p>Intent: <b>${r.command?.intent||'?'}</b> (${((r.command?.confidence||0)*100).toFixed(0)}%)</p><p>Mode: ${r.result?.cognitive_mode||'done'}</p>`;
+}
+
+setupTabs();
+function setupTabs(){document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));b.classList.add('active');document.getElementById(b.dataset.t+'-tab').classList.add('on');curTab=b.dataset.t;refreshTab()}))}
+
+ refOverview();
+ let refreshMs=5000;
+ setInterval(()=>{if(document.visibilityState==='visible')refreshTab();refreshMs=apiFailCount>3?15000:apiFailCount>1?10000:5000},5000);
+ document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refreshTab()});
+</script>
+</body>
+</html>

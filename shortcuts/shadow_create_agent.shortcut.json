@@ -1,0 +1,40 @@
+{
+  "WFWorkflowName": "Shadow Create Agent",
+  "WFWorkflowIcon": {
+    "WFWorkflowIconStartColor": 4294967295,
+    "WFWorkflowIconGlyphNumber": 0
+  },
+  "WFWorkflowActions": [
+    {
+      "WFWorkflowActionIdentifier": "is.workflow.actions.askforinput",
+      "WFWorkflowActionParameters": {
+        "WFAskForInputType": "Text",
+        "WFQuestion": "What should I objective?"
+      }
+    },
+    {
+      "WFWorkflowActionIdentifier": "is.workflow.actions.downloadurl",
+      "WFWorkflowActionParameters": {
+        "WFURL": "https://your-host.your-tailnet.ts.net:8766/os/arise",
+        "WFHTTPMethod": "POST",
+        "WFHTTPBodyType": "JSON",
+        "WFHTTPBody": "{\"objective\": \"ShortcutInput\"}",
+        "WFHTTPHeaders": {
+          "Content-Type": "application/json"
+        }
+      }
+    },
+    {
+      "WFWorkflowActionIdentifier": "is.workflow.actions.getdictionaryvalue",
+      "WFWorkflowActionParameters": {
+        "WFDictionaryKey": "name"
+      }
+    },
+    {
+      "WFWorkflowActionIdentifier": "is.workflow.actions.showresult",
+      "WFWorkflowActionParameters": {}
+    }
+  ],
+  "WFWorkflowImportQuestions": [],
+  "WFWorkflowMinimumClientVersion": 411
+}

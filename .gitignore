@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+venv/
+.venv/
+.pytest_cache/
+.hypothesis/
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# Runtime data (regenerated at runtime — never commit)
+data/
+cache/
+
+# Logs
+*.log
+docs/logs/
+
+# OS
+.DS_Store
+Thumbs.db

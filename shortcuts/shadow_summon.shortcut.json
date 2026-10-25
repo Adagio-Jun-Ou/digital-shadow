@@ -1,0 +1,40 @@
+{
+  "WFWorkflowName": "Shadow Summon",
+  "WFWorkflowIcon": {
+    "WFWorkflowIconStartColor": 4294967295,
+    "WFWorkflowIconGlyphNumber": 0
+  },
+  "WFWorkflowActions": [
+    {
+      "WFWorkflowActionIdentifier": "is.workflow.actions.askforinput",
+      "WFWorkflowActionParameters": {
+        "WFAskForInputType": "Text",
+        "WFQuestion": "What should I transcript?"
+      }
+    },
+    {
+      "WFWorkflowActionIdentifier": "is.workflow.actions.downloadurl",
+      "WFWorkflowActionParameters": {
+        "WFURL": "https://your-host.your-tailnet.ts.net:8766/os/summon/text",
+        "WFHTTPMethod": "POST",
+        "WFHTTPBodyType": "JSON",
+        "WFHTTPBody": "{\"transcript\": \"ShortcutInput\"}",
+        "WFHTTPHeaders": {
+          "Content-Type": "application/json"
+        }
+      }
+    },
+    {
+      "WFWorkflowActionIdentifier": "is.workflow.actions.getdictionaryvalue",
+      "WFWorkflowActionParameters": {
+        "WFDictionaryKey": "spoken"
+      }
+    },
+    {
+      "WFWorkflowActionIdentifier": "is.workflow.actions.showresult",
+      "WFWorkflowActionParameters": {}
+    }
+  ],
+  "WFWorkflowImportQuestions": [],
+  "WFWorkflowMinimumClientVersion": 411
+}

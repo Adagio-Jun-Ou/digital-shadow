@@ -1,0 +1,27 @@
+{
+  "WFWorkflowName": "Push Location",
+  "WFWorkflowIcon": {
+    "WFWorkflowIconStartColor": 65280,
+    "WFWorkflowIconGlyphNumber": 0
+  },
+  "WFWorkflowActions": [
+    {
+      "WFWorkflowActionIdentifier": "is.workflow.actions.downloadurl",
+      "WFWorkflowActionParameters": {
+        "WFURL": "https://your-host.your-tailnet.ts.net:8766/os/device/iphone",
+        "WFHTTPMethod": "POST",
+        "WFHTTPBodyType": "JSON",
+        "WFHTTPBody": "{\"device_id\": \"iphone_siri\", \"data\": {\"location\": {\"latitude\": 37.7749, \"longitude\": -122.4194, \"accuracy\": 10, \"name\": \"Current Location\"}}}",
+        "WFHTTPHeaders": {
+          "Content-Type": "application/json"
+        }
+      }
+    },
+    {
+      "WFWorkflowActionIdentifier": "is.workflow.actions.showresult",
+      "WFWorkflowActionParameters": {}
+    }
+  ],
+  "WFWorkflowImportQuestions": [],
+  "WFWorkflowMinimumClientVersion": 411
+}

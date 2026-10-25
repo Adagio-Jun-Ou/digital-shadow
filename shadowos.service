@@ -1,0 +1,19 @@
+[Unit]
+Description=ShadowOS Cognitive AI Platform v2
+After=docker.service network.target
+Wants=docker.service
+
+[Service]
+Type=simple
+User=your-user
+WorkingDirectory=/home/user/digital-shadow
+Environment=PATH=/home/user/digital-shadow/venv/bin:/usr/local/bin:/usr/bin:/bin
+Environment=PYTHONUNBUFFERED=1
+Environment=SHADOW_DATA_DIR=/home/user/digital-shadow/data
+Environment=SHADOW_CORS_ORIGINS=http://localhost:3000,http://localhost:8765,http://127.0.0.1:8765,http://localhost:8766,https://your-host.your-tailnet.ts.net:8766
+ExecStart=/home/user/digital-shadow/venv/bin/python -m shadowd.cognition.shadowosd --host 127.0.0.1 --port 8766
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

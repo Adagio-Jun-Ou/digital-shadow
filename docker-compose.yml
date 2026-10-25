@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  shadow-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: shadow-api
+    ports:
+      - "${SHADOW_PORT:-8765}:8765"
+    environment:
+      - SHADOW_DATA_DIR=/app/data
+      - SHADOW_HOST=0.0.0.0
+      - SHADOW_PORT=8765
+      - SHADOW_AUTH_ENABLED=${SHADOW_AUTH_ENABLED:-false}
+      - SHADOW_ADMIN_PASSWORD=${SHADOW_ADMIN_PASSWORD:-changeme123}
+      - SHADOW_CORS_ORIGINS=${SHADOW_CORS_ORIGINS:-http://localhost:3000,http://localhost:8765}
+      - OLLAMA_API_KEY=${LLM_API_KEY:-}
+      - OLLAMA_API_BASE=${LLM_API_BASE:-https://ollama.com/v1}
+      - OLLAMA_MODEL=${LLM_MODEL:-glm-5}
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - shadow_data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8765/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  shadow_data:

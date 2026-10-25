@@ -1,0 +1,27 @@
+{
+  "WFWorkflowName": "Push Watch Health",
+  "WFWorkflowIcon": {
+    "WFWorkflowIconStartColor": 65280,
+    "WFWorkflowIconGlyphNumber": 0
+  },
+  "WFWorkflowActions": [
+    {
+      "WFWorkflowActionIdentifier": "is.workflow.actions.downloadurl",
+      "WFWorkflowActionParameters": {
+        "WFURL": "https://your-host.your-tailnet.ts.net:8766/os/device/watch",
+        "WFHTTPMethod": "POST",
+        "WFHTTPBodyType": "JSON",
+        "WFHTTPBody": "{\"device_id\": \"apple_watch_siri\", \"data\": {\"heart_rate\": 68, \"hrv\": 50, \"steps\": 3200, \"sleep_hours\": 7.0, \"spo2\": 99, \"stress_level\": \"low\", \"active_energy\": 180, \"standing_hours\": 6}}",
+        "WFHTTPHeaders": {
+          "Content-Type": "application/json"
+        }
+      }
+    },
+    {
+      "WFWorkflowActionIdentifier": "is.workflow.actions.showresult",
+      "WFWorkflowActionParameters": {}
+    }
+  ],
+  "WFWorkflowImportQuestions": [],
+  "WFWorkflowMinimumClientVersion": 411
+}

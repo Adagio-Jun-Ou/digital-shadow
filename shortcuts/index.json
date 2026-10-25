@@ -1,0 +1,250 @@
+{
+  "shortcuts": [
+    {
+      "name": "Shadow Summon",
+      "phrase": "Shadow Summon",
+      "description": "Voice-command ShadowOS to create agents, invoke abilities, or ask questions",
+      "icon": "\ud83e\uddd9",
+      "endpoint": "/os/summon/text",
+      "files": [
+        "shadow_summon.shortcut.json",
+        "shadow_summon.sh"
+      ]
+    },
+    {
+      "name": "Shadow Create Agent",
+      "phrase": "Shadow Create Agent",
+      "description": "Create a new agent with a specific role",
+      "icon": "\ud83e\udd16",
+      "endpoint": "/os/arise",
+      "files": [
+        "shadow_create_agent.shortcut.json",
+        "shadow_create_agent.sh"
+      ]
+    },
+    {
+      "name": "Shadow Status",
+      "phrase": "Shadow Status",
+      "description": "Get current ShadowOS system status",
+      "icon": "\ud83d\udcca",
+      "endpoint": "/os/status",
+      "files": [
+        "shadow_status.shortcut.json",
+        "shadow_status.sh"
+      ]
+    },
+    {
+      "name": "Shadow Predict",
+      "phrase": "Shadow Predict",
+      "description": "Use Oracle ability to predict outcomes",
+      "icon": "\ud83d\udd2e",
+      "endpoint": "/os/summon/text",
+      "files": [
+        "shadow_predict.shortcut.json",
+        "shadow_predict.sh"
+      ]
+    },
+    {
+      "name": "Shadow Council",
+      "phrase": "Shadow Council",
+      "description": "Get advice from the Shadow Council",
+      "icon": "\u2696\ufe0f",
+      "endpoint": "/os/summon/text",
+      "files": [
+        "shadow_council.shortcut.json",
+        "shadow_council.sh"
+      ]
+    },
+    {
+      "name": "Shadow Agents",
+      "phrase": "Shadow Agents",
+      "description": "List all active agents",
+      "icon": "\ud83d\udc65",
+      "endpoint": "/os/arise",
+      "files": [
+        "shadow_agents.shortcut.json",
+        "shadow_agents.sh"
+      ]
+    }
+  ],
+  "health_shortcuts": [
+    {
+      "name": "Push iPhone Health",
+      "phrase": "Push Health to Shadow",
+      "description": "Send HealthKit data (heart rate, steps, sleep) to ShadowOS",
+      "icon": "\u2764\ufe0f",
+      "endpoint": "/os/device/iphone",
+      "device_id": "iphone_siri",
+      "device_type": "iphone",
+      "files": [
+        "push_iphone_health.shortcut.json",
+        "push_iphone_health.sh"
+      ]
+    },
+    {
+      "name": "Push Watch Health",
+      "phrase": "Push Watch to Shadow",
+      "description": "Send Apple Watch health data (HR, HRV, SpO2) to ShadowOS",
+      "icon": "\u231a",
+      "endpoint": "/os/device/watch",
+      "device_id": "apple_watch_siri",
+      "device_type": "watch",
+      "files": [
+        "push_watch_health.shortcut.json",
+        "push_watch_health.sh"
+      ]
+    },
+    {
+      "name": "Push Location",
+      "phrase": "Push Location to Shadow",
+      "description": "Send current location to ShadowOS for context awareness",
+      "icon": "\ud83d\udccd",
+      "endpoint": "/os/device/iphone",
+      "device_id": "iphone_siri",
+      "device_type": "iphone",
+      "files": [
+        "push_location.shortcut.json",
+        "push_location.sh"
+      ]
+    },
+    {
+      "name": "Push Battery",
+      "phrase": "Push Battery to Shadow",
+      "description": "Send iPhone battery level to ShadowOS",
+      "icon": "\ud83d\udd0b",
+      "endpoint": "/os/device/iphone",
+      "device_id": "iphone_siri",
+      "device_type": "iphone",
+      "files": [
+        "push_battery.shortcut.json",
+        "push_battery.sh"
+      ]
+    }
+  ],
+  "base_url": "https://your-host.your-tailnet.ts.net:8766",
+  "authentication": {
+    "type": "X-API-Key",
+    "header": "X-API-Key",
+    "required": false,
+    "env_var": "SHADOW_OS_API_KEY"
+  },
+  "api_endpoints": {
+    "device_register": {
+      "method": "POST",
+      "path": "/os/device/register",
+      "description": "Register a new device"
+    },
+    "iphone_ingest": {
+      "method": "POST",
+      "path": "/os/device/iphone",
+      "description": "Push iPhone data (health, location, battery, notifications)"
+    },
+    "watch_ingest": {
+      "method": "POST",
+      "path": "/os/device/watch",
+      "description": "Push Apple Watch health data (HR, HRV, SpO2, steps)"
+    },
+    "laptop_ingest": {
+      "method": "POST",
+      "path": "/os/device/laptop",
+      "description": "Push laptop data (active window, CPU, battery, WiFi)"
+    },
+    "device_context": {
+      "method": "GET",
+      "path": "/os/device/context",
+      "description": "Get current unified device context"
+    },
+    "health_trends": {
+      "method": "GET",
+      "path": "/os/device/health-trends",
+      "description": "Get health data trends"
+    },
+    "digital_wellbeing": {
+      "method": "GET",
+      "path": "/os/device/digital-wellbeing",
+      "description": "Get digital wellbeing metrics"
+    }
+  },
+  "data_schemas": {
+    "iphone": {
+      "health": {
+        "heart_rate": "number (bpm)",
+        "hrv": "number (ms, heart rate variability)",
+        "steps": "number (daily step count)",
+        "sleep_hours": "number (hours slept last night)",
+        "spo2": "number (blood oxygen %)",
+        "stress_level": "string (low/medium/high)",
+        "active_energy": "number (kcal burned)"
+      },
+      "location": {
+        "latitude": "number",
+        "longitude": "number",
+        "accuracy": "number (meters)",
+        "name": "string (place name)"
+      },
+      "battery": {
+        "level": "number (0-100)",
+        "charging": "boolean"
+      },
+      "notifications": [
+        {
+          "app": "string",
+          "category": "string"
+        }
+      ],
+      "calendar": [
+        {
+          "title": "string",
+          "start": "ISO datetime",
+          "end": "ISO datetime"
+        }
+      ]
+    },
+    "watch": {
+      "heart_rate": "number (bpm)",
+      "hrv": "number (ms)",
+      "steps": "number",
+      "sleep_hours": "number",
+      "spo2": "number (blood oxygen %)",
+      "stress_level": "string (low/medium/high)",
+      "active_energy": "number (kcal)",
+      "standing_hours": "number"
+    },
+    "laptop": {
+      "active_window": "string (app name)",
+      "screen_on": "boolean",
+      "cpu_usage": "number (0-100)",
+      "memory_usage": "number (0-100)",
+      "battery_level": "number (0-100)",
+      "battery_charging": "boolean",
+      "wifi_ssid": "string",
+      "media_playing": "string or null"
+    }
+  },
+  "setup_instructions": [
+    "1. Open Shortcuts app on iPhone",
+    "2. Tap '+' to create a new shortcut",
+    "3. Add 'Get Contents of URL' action",
+    "4. Set URL to: https://your-host.your-tailnet.ts.net:8766/os/summon/text",
+    "5. Set method to POST",
+    "6. Add JSON body with 'transcript' key",
+    "7. Add 'Show Result' action",
+    "8. Name the shortcut 'Shadow Summon'",
+    "9. Enable 'Show in Share Sheet' and 'Siri Shortcuts'",
+    "10. Say 'Hey Siri, Shadow Summon' to invoke",
+    "",
+    "For HealthKit data push:",
+    "11. Create an Automation in Shortcuts",
+    "12. Set trigger: 'Health Sample' (heart rate, steps, etc.)",
+    "13. Add 'Get Contents of URL' action",
+    "14. Set URL to: https://your-host.your-tailnet.ts.net:8766/os/device/iphone",
+    "15. Set method to POST",
+    "16. Set body to JSON with device_id and health data",
+    "17. Add X-API-Key header if authentication is enabled",
+    "",
+    "For Apple Watch data:",
+    "18. Create a shortcut that reads Watch health metrics",
+    "19. Push to: https://your-host.your-tailnet.ts.net:8766/os/device/watch",
+    "20. Set device_id to 'apple_watch_siri'"
+  ]
+}

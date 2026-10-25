@@ -1,0 +1,39 @@
+# Shadow AI Configuration
+# Priority: Environment > YAML config > Defaults
+
+llm:
+  model: deepseek-v4-pro
+  api_base: https://ollama.com/v1
+  temperature: 0.7
+  max_retries: 3
+
+memory:
+  core_limit: 2000
+  observation_limit: 1000
+  save_interval_seconds: 300
+
+shikigami:
+  bt_scan_timeout: 10
+  wifi_scan_timeout: 10
+  cmd_timeout: 10
+  llm_timeout: 60.0
+
+observer:
+  terminal_poll_seconds: 2.0
+  clipboard_poll_seconds: 3.0
+  window_poll_seconds: 5.0
+  git_poll_seconds: 30.0
+  proactive_interval_seconds: 60
+  compact_interval_seconds: 120
+
+security:
+  auth_enabled: false
+  admin_email: admin@shadow.local
+  admin_password: changeme123
+  cors_origins: "http://localhost:3000,http://localhost:8765,http://127.0.0.1:8765"
+  rate_limit_per_minute: 60
+
+server:
+  host: 127.0.0.1
+  port: 8765
+  log_level: INFO

@@ -1,0 +1,53 @@
+#!/bin/bash
+# Shadow AI MCP Server Launcher
+# Usage: shadow-mcp [--transport stdio|streamable-http|sse] [--port PORT]
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
+# Default values
+TRANSPORT="${1:-streamable-http}"
+PORT="${2:-8000}"
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --transport)
+            TRANSPORT="$2"
+            shift 2
+            ;;
+        --port)
+            PORT="$2"
+            shift 2
+            ;;
+        --help|-h)
+            echo "Shadow AI MCP Server"
+            echo ""
+            echo "Usage: shadow-mcp [OPTIONS]"
+            echo ""
+            echo "Options:"
+            echo "  --transport TRANSPORT  Transport protocol (stdio, streamable-http, sse)"
+            echo "                           Default: streamable-http"
+            echo "  --port PORT             Port for HTTP transports"
+            echo "                           Default: 8000"
+            echo "  --help, -h              Show this help message"
+            echo ""
+            echo "Examples:"
+            echo "  shadow-mcp                                # Run with default settings"
+            echo "  shadow-mcp --transport stdio               # Run with stdio"
+            echo "  shadow-mcp --transport streamable-http --port 9000  # Run on port 9000"
+            exit 0
+            ;;
+        *)
+            shift
+            ;;
+    esac
+done
+
+# Run the MCP server
+echo "Starting Shadow AI MCP Server..."
+echo "Transport: $TRANSPORT"
+echo "Port: $PORT"
+echo ""
+
+exec python -m shadowd.run_mcp_server --transport "$TRANSPORT" --port "$PORT"
